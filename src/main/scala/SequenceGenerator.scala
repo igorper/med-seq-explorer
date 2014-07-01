@@ -25,6 +25,7 @@ object SequenceGenerator {
              .setAppName("SequenceGenerator")
              .set("spark.executor.memory", "4g")
 
+
 		val sc = new SparkContext(config)
 
 		// read data
@@ -37,35 +38,36 @@ object SequenceGenerator {
 
 		// create batches of two sequential elements to calculate time diff
 		// (to do this, lines first have to be collected and then paralleized again)
-		val slidedLines = sc.parallelize(noHeaderFile.collect.iterator.sliding(2).toList)
+		// val slidedLines = sc.parallelize(noHeaderFile.collect.iterator.sliding(2).toList)
 
 		// split lines to columns (take only the first 7 columns as the last one could be empty, which messes up cols access indexes)
-		val cols = slidedLines.map(line => line(0).split("\t").slice(0,8) ++ line(1).split("\t").slice(0,8))
+		// val cols = slidedLines.map(line => line(0).split("\t").slice(0,8) ++ line(1).split("\t").slice(0,8))
 
 		// create action nodes (for each node we also calculate time distance in seconds between two consequtive nodes in seconds)
-		val actionNodes = cols.map(cols => ActionNode(cols(0), cols(3), cols(6), ((dateFormat.parse(cols(12)).getTime() - dateFormat.parse(cols(4)).getTime()) / 1000).toInt))
+		//val actionNodes = cols.map(cols => ActionNode(cols(0), cols(3), cols(6), ((dateFormat.parse(cols(12)).getTime() - dateFormat.parse(cols(4)).getTime()) / 1000).toInt))
+		val actionNodes = noHeaderFile.map(line => line.split("\t")).map(cols => ActionNode(cols(0), cols(3), cols(6), 0))
 
 		// group nodes by sessionID
-		val groupedBySession = actionNodes.groupBy(_.sessionID)
+		// val groupedBySession = actionNodes.groupBy(_.sessionID)
 
 		// foreach group (session) check if the time diff between two nodes was longer than a predefined threshold and optionally explode
 		// them to additional subsession
-		val groupedSplitSessions = groupedBySession.values.map(nodes => {
-			var cnt = 1
-			nodes.map(node => {
-				if(node.timeDiffInSeconds > sessionThreshold) { 
-					cnt = cnt + 1
-				} 
+		// val groupedSplitSessions = groupedBySession.values.map(nodes => {
+		// 	var cnt = 1
+		// 	nodes.map(node => {
+		// 		if(node.timeDiffInSeconds > sessionThreshold) { 
+		// 			cnt = cnt + 1
+		// 		} 
 
-				new ActionNode(node.sessionID + "_" + cnt.toString, node.topicView, node.topicTitle, node.timeDiffInSeconds)
-			})
-		})
+		// 		new ActionNode(node.sessionID + "_" + cnt.toString, node.topicView, node.topicTitle, node.timeDiffInSeconds)
+		// 	})
+		// })
 
 		// flatten grouped sessions to a single level collection
-		val splitSessions = groupedSplitSessions.flatMap(node => node)
+		// val splitSessions = groupedSplitSessions.flatMap(node => node)
 
 		// filter out all topic nodes that are not TopicView/full
-		val topicFullSessions = splitSessions.filter(_.topicView.contains("TopicView/full"))
+		val topicFullSessions = actionNodes.filter(_.topicView.contains("TopicView/full"))
 
 		// group sessions again, this time using also the newly created subsessions
 		val groupedBySplitSessions = topicFullSessions.groupBy(_.sessionID)
