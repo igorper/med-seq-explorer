@@ -31,10 +31,10 @@ object SequenceGenerator {
 		val slidedLines = sc.parallelize(lines.collect.iterator.sliding(2).toList)
 
 		// split lines to columns (take only the first 7 columns as the last one could be empty, which messes up cols access indexes)
-		val cols = slidedLines.map(line => line(0).split("\t").slice(0,6) ++ line(1).split("\t").slice(0,6))
+		val cols = slidedLines.map(line => line(0).split("\t").slice(0,8) ++ line(1).split("\t").slice(0,8))
 
 		// create action nodes (for each node we also calculate time distance in seconds between two consequtive nodes in seconds)
-		val actionNodes = cols.map(cols => ActionNode(cols(0), cols(3), cols(6), ((dateFormat.parse(cols(10)).getTime() - dateFormat.parse(cols(4)).getTime()) / 1000).toInt))
+		val actionNodes = cols.map(cols => ActionNode(cols(0), cols(3), cols(6), ((dateFormat.parse(cols(12)).getTime() - dateFormat.parse(cols(4)).getTime()) / 1000).toInt))
 
 		// group nodes by sessionID
 		val groupedBySession = actionNodes.groupBy(_.sessionID)
@@ -54,6 +54,27 @@ object SequenceGenerator {
 
 		// flatten grouped sessions to a single level collection
 		val splitSessions = groupedSplitSessions.flatMap(node => node)
+
+		// filter out all topic nodes that are not TopicView/full
+		val topicFullSessions = splitSessions.filter(_.topicView.contains("TopicView/full"))
+
+		// group sessions again, this time using also the newly created subsessions
+		val groupedBySplitSessions = topicFullSessions.groupBy(_.sessionID)
+
+		// for each session create a sequence of topic titles
+		val sequences = groupedBySplitSessions.map {case (sessionID, nodes) => {
+				(sessionID, nodes.map(_.topicTitle))
+			}
+		}
+
+		// print out created sequences
+		//sequences.values.foreach(println)
+
+		// get frequencies of individual topics 
+		val titleCounts = sequences.values.flatMap(n=>n).map(n=>(n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }.cache
+
+		val sortedTitleCounts = titleCounts.sortByKey(false)
+		sortedTitleCounts.foreach(println)
 
 		println("##########")
 		printf("Processed '%s' with threshold: %d\n", input, sessionThreshold)
