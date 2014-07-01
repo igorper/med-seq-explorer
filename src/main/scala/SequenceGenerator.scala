@@ -16,19 +16,22 @@ object SequenceGenerator {
 		
 		val conf = ConfigFactory.load
 		val input = conf.getString("input");
-		val sessionThreshold = conf.getInt("sessionThreshold")			
+		val sessionThreshold = conf.getInt("sessionThreshold")
+		val clusterUrl = conf.getString("clusterUrl")
 
 		val sc = new SparkContext("local[4]", "SequenceGenerator")
 
 		// read data
 		val file = sc.textFile(input)
 
-		// drop the header line
-		val lines = file.mapPartitionsWithIndex { (index, iter) => if (index == 0) iter.drop(1) else iter }
+		// remove lines that contain the header string (it could be many of them
+		// as different files could be loaded each starting with the header)
+		// (the string starts with 'Session ID')
+		val noHeaderFile = file.filter(!_.startsWith("Session ID"))
 
 		// create batches of two sequential elements to calculate time diff
 		// (to do this, lines first have to be collected and then paralleized again)
-		val slidedLines = sc.parallelize(lines.collect.iterator.sliding(2).toList)
+		val slidedLines = sc.parallelize(noHeaderFile.collect.iterator.sliding(2).toList)
 
 		// split lines to columns (take only the first 7 columns as the last one could be empty, which messes up cols access indexes)
 		val cols = slidedLines.map(line => line(0).split("\t").slice(0,8) ++ line(1).split("\t").slice(0,8))
@@ -73,8 +76,11 @@ object SequenceGenerator {
 		// get frequencies of individual topics 
 		val titleCounts = sequences.values.flatMap(n=>n).map(n=>(n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }.cache
 
+		// order results by decreasing count
 		val sortedTitleCounts = titleCounts.sortByKey(false)
-		sortedTitleCounts.foreach(println)
+
+		// store the results to a file
+		sortedTitleCounts.saveAsTextFile("results/counts.txt")
 
 		println("##########")
 		printf("Processed '%s' with threshold: %d\n", input, sessionThreshold)

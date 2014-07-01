@@ -1,4 +1,5 @@
 {
-	"input" : "",
-	"sessionThreshold" : 0
+	"input" : "/",
+	"sessionThreshold" : 0,
+	"clusterUrl" : "local[4]"
 }
