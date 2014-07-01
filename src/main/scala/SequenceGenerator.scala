@@ -33,18 +33,18 @@ object SequenceGenerator {
 		// split lines to columns (take only the first 7 columns as the last one could be empty, which messes up cols access indexes)
 		val cols = slidedLines.map(line => line(0).split("\t").slice(0,6) ++ line(1).split("\t").slice(0,6))
 
-		// create action nodes (for each node we also calculate time distance between two consequtive nodes in seconds)
+		// create action nodes (for each node we also calculate time distance in seconds between two consequtive nodes in seconds)
 		val actionNodes = cols.map(cols => ActionNode(cols(0), cols(3), cols(6), ((dateFormat.parse(cols(10)).getTime() - dateFormat.parse(cols(4)).getTime()) / 1000).toInt))
 
 		// group nodes by sessionID
 		val groupedBySession = actionNodes.groupBy(_.sessionID)
 
-		// foreach group check if the time diff between two nodes was longer than a predefined threshold and optionally explode
+		// foreach group (session) check if the time diff between two nodes was longer than a predefined threshold and optionally explode
 		// them to additional subsession
 		val groupedSplitSessions = groupedBySession.values.map(nodes => {
 			var cnt = 1
 			nodes.map(node => {
-				if(node.timeDiffInSeconds > 15) { 
+				if(node.timeDiffInSeconds > sessionThreshold) { 
 					cnt = cnt + 1
 				} 
 
@@ -54,5 +54,9 @@ object SequenceGenerator {
 
 		// flatten grouped sessions to a single level collection
 		val splitSessions = groupedSplitSessions.flatMap(node => node)
+
+		println("##########")
+		printf("Processed '%s' with threshold: %d\n", input, sessionThreshold)
+		println("##########")
 	}
 }
