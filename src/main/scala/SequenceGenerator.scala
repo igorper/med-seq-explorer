@@ -1,5 +1,6 @@
 import org.apache.spark._
 import org.apache.spark.SparkContext._
+import org.apache.spark.SparkConf
 
 import com.typesafe.config.ConfigFactory
 import java.util.Date
@@ -19,7 +20,12 @@ object SequenceGenerator {
 		val sessionThreshold = conf.getInt("sessionThreshold")
 		val clusterUrl = conf.getString("clusterUrl")
 
-		val sc = new SparkContext("local[4]", "SequenceGenerator")
+		val config = new SparkConf()
+             .setMaster(clusterUrl)
+             .setAppName("SequenceGenerator")
+             .set("spark.executor.memory", "4g")
+
+		val sc = new SparkContext(config)
 
 		// read data
 		val file = sc.textFile(input)
@@ -74,7 +80,7 @@ object SequenceGenerator {
 		//sequences.values.foreach(println)
 
 		// get frequencies of individual topics 
-		val titleCounts = sequences.values.flatMap(n=>n).map(n=>(n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }.cache
+		val titleCounts = sequences.values.flatMap(n=>n).map(n=>(n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
 
 		// order results by decreasing count
 		val sortedTitleCounts = titleCounts.sortByKey(false)
