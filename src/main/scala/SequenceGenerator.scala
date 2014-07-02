@@ -40,11 +40,10 @@ object SequenceGenerator {
 		val noHeaderFile = file.filter(!_.startsWith("Session ID"))
 
 		// sessionID, topicView, topicTitle
-		val actionNodes = noHeaderFile.map(line => line.split("\t")).map(cols => (cols(0), cols(3), cols(6)))
+		// val actionNodes = noHeaderFile.map(line => line.split("\t")).map(cols => (cols(0), cols(3), cols(6)))
+		val actionNodes = noHeaderFile.map(line => line.split("\t")).map(cols => cols(6))
 
-		val topicFullSessions = actionNodes.filter(cols => cols._2.contains("TopicView/full")).map(cols => cols._3)
-
-		val titleCounts = topicFullSessions.map(n => (n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
+		val titleCounts = actionNodes.map(n => (n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
 
 		// order results by decreasing count
 		val sortedTitleCounts = titleCounts.sortByKey(false)
