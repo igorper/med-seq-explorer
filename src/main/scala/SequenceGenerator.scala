@@ -24,8 +24,7 @@ object SequenceGenerator {
 		val config = new SparkConf()
              .setMaster("local[8]")
              .setAppName("SequenceGenerator")
-             .set("spark.executor.memory", "4g")
-//	     .set("spark.storage.memoryFraction", "0")
+             .set("spark.executor.memory", "8g")
 
 		val sc = new SparkContext(config)
 
@@ -39,14 +38,17 @@ object SequenceGenerator {
 
 		var removedShort = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7) 
 
+		val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full")).map(m => (m(0), m(3), m(6)))
+
 		// sessionID, topicView, topicTitle
 		// val actionNodes = noHeaderFile.map(line => line.split("\t")).ma
-		val actionNodes = removedShort.map(m => (m(0), m(3), m(6)))
+		//val actionNodes = removedShort.map(m => (m(0), m(3), m(6)))
+		//val actionNodes = removedShort.map(m=
 
 		// filter out nodes that are not "TopicView/full"
-		val topicFullSessions = actionNodes.filter(n => n._2.contains("TopicView/full")).map(n => n._3)
+		//val topicFullSessions = actionNodes.filter(n => n._2.contains("TopicView/full")).map(n => n._3)
 
-		val titleCounts = actionNodes.map(n => (n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
+		val titleCounts = topicFullSessions.map(n => (n._3, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
 
 		// order results by decreasing count
 		val sortedTitleCounts = titleCounts.sortByKey(false)
