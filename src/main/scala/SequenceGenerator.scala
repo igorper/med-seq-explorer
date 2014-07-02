@@ -96,7 +96,7 @@ object SequenceGenerator {
 
 		// stop timing execution
 	  val t1 = System.nanoTime()
-	  
+
 		println("##########")
 		printf("Processed '%s' with threshold: %d in %d seconds.\n", input, sessionThreshold, (t1 - t0)/1000000000)
 		println("##########")
