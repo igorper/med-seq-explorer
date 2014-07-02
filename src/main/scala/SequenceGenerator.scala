@@ -14,6 +14,9 @@ object SequenceGenerator {
 	val dateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
 
 	def main(args: Array[String]) {
+		// start timing execution
+    val t0 = System.nanoTime()
+
 		
 		val conf = ConfigFactory.load
 		val input = conf.getString("input");
@@ -30,11 +33,12 @@ object SequenceGenerator {
 
 		// read data
 		val file = sc.textFile(input)
+		println(file.count)
 
 		// remove lines that contain the header string (it could be many of them
 		// as different files could be loaded each starting with the header)
 		// (the string starts with 'Session ID')
-		val noHeaderFile = file.filter(!_.startsWith("Session ID"))
+		// val noHeaderFile = file.filter(!_.startsWith("Session ID"))
 
 		// create batches of two sequential elements to calculate time diff
 		// (to do this, lines first have to be collected and then paralleized again)
@@ -45,7 +49,7 @@ object SequenceGenerator {
 
 		// create action nodes (for each node we also calculate time distance in seconds between two consequtive nodes in seconds)
 		//val actionNodes = cols.map(cols => ActionNode(cols(0), cols(3), cols(6), ((dateFormat.parse(cols(12)).getTime() - dateFormat.parse(cols(4)).getTime()) / 1000).toInt))
-		val actionNodes = noHeaderFile.map(line => line.split("\t")).map(cols => ActionNode(cols(0), cols(3), cols(6), 0))
+		// val actionNodes = noHeaderFile.map(line => line.split("\t")).map(cols => ActionNode(cols(0), cols(3), cols(6), 0))
 
 		// group nodes by sessionID
 		// val groupedBySession = actionNodes.groupBy(_.sessionID)
@@ -67,31 +71,34 @@ object SequenceGenerator {
 		// val splitSessions = groupedSplitSessions.flatMap(node => node)
 
 		// filter out all topic nodes that are not TopicView/full
-		val topicFullSessions = actionNodes.filter(_.topicView.contains("TopicView/full"))
+		// val topicFullSessions = actionNodes.filter(_.topicView.contains("TopicView/full"))
 
 		// group sessions again, this time using also the newly created subsessions
-		val groupedBySplitSessions = topicFullSessions.groupBy(_.sessionID)
+		// val groupedBySplitSessions = topicFullSessions.groupBy(_.sessionID)
 
 		// for each session create a sequence of topic titles
-		val sequences = groupedBySplitSessions.map {case (sessionID, nodes) => {
-				(sessionID, nodes.map(_.topicTitle))
-			}
-		}
+		// val sequences = groupedBySplitSessions.map {case (sessionID, nodes) => {
+		// 		(sessionID, nodes.map(_.topicTitle))
+		// 	}
+		// }
 
 		// print out created sequences
 		//sequences.values.foreach(println)
 
 		// get frequencies of individual topics 
-		val titleCounts = sequences.values.flatMap(n=>n).map(n=>(n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
+		// val titleCounts = sequences.values.flatMap(n=>n).map(n=>(n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
 
 		// order results by decreasing count
-		val sortedTitleCounts = titleCounts.sortByKey(false)
+		// val sortedTitleCounts = titleCounts.sortByKey(false)
 
 		// store the results to a file
-		sortedTitleCounts.saveAsTextFile("results/counts.txt")
+		// sortedTitleCounts.saveAsTextFile("results/counts.txt")
 
+		// stop timing execution
+	  val t1 = System.nanoTime()
+	  
 		println("##########")
-		printf("Processed '%s' with threshold: %d\n", input, sessionThreshold)
+		printf("Processed '%s' with threshold: %d in %d seconds.\n", input, sessionThreshold, (t1 - t0)/1000000000)
 		println("##########")
 	}
 }
