@@ -24,9 +24,10 @@ object SequenceGenerator {
 		val clusterUrl = conf.getString("clusterUrl")
 
 		val config = new SparkConf()
-             .setMaster(clusterUrl)
+             .setMaster("local[8]")
              .setAppName("SequenceGenerator")
              .set("spark.executor.memory", "4g")
+//	     .set("spark.storage.memoryFraction", "0")
 
 
 		val sc = new SparkContext(config)
@@ -38,12 +39,17 @@ object SequenceGenerator {
 		// as different files could be loaded each starting with the header)
 		// (the string starts with 'Session ID')
 		val noHeaderFile = file.filter(!_.startsWith("Session ID"))
+		println(noHeaderFile.first())
 
 		// sessionID, topicView, topicTitle
-		// val actionNodes = noHeaderFile.map(line => line.split("\t")).map(cols => (cols(0), cols(3), cols(6)))
-		val actionNodes = noHeaderFile.map(line => line.split("\t")).map(cols => cols(6))
+		// val actionNodes = noHeaderFile.map(line => line.split("\t")).ma
+		val actionNodes = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7).filter(n => n(3).contains("TopicView/full")).map(m=> m(6))
+		
+
+//		println(actionNodes.first())
 
 		val titleCounts = actionNodes.map(n => (n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
+		println(titleCounts.count)
 
 		// order results by decreasing count
 		val sortedTitleCounts = titleCounts.sortByKey(false)
