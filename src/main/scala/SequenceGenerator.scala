@@ -7,10 +7,8 @@ import java.util.Date
 
 import org.apache.commons.lang3.time.FastDateFormat
 
-
 object SequenceGenerator {
 
-	case class ActionNode(sessionID: String, topicView: String, topicTitle: String, timeDiffInSeconds: Int)
 	val dateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
 
 	def main(args: Array[String]) {
@@ -29,7 +27,6 @@ object SequenceGenerator {
              .set("spark.executor.memory", "4g")
 //	     .set("spark.storage.memoryFraction", "0")
 
-
 		val sc = new SparkContext(config)
 
 		// read data
@@ -39,17 +36,17 @@ object SequenceGenerator {
 		// as different files could be loaded each starting with the header)
 		// (the string starts with 'Session ID')
 		val noHeaderFile = file.filter(!_.startsWith("Session ID"))
-		println(noHeaderFile.first())
+
+		var removedShort = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7) 
 
 		// sessionID, topicView, topicTitle
 		// val actionNodes = noHeaderFile.map(line => line.split("\t")).ma
-		val actionNodes = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7).filter(n => n(3).contains("TopicView/full")).map(m=> m(6))
-		
+		val actionNodes = removedShort.map(m => (m(0), m(3), m(6)))
 
-//		println(actionNodes.first())
+		// filter out nodes that are not "TopicView/full"
+		val topicFullSessions = actionNodes.filter(n => n._2.contains("TopicView/full")).map(n => n._3)
 
 		val titleCounts = actionNodes.map(n => (n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
-		println(titleCounts.count)
 
 		// order results by decreasing count
 		val sortedTitleCounts = titleCounts.sortByKey(false)
