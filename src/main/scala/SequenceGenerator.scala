@@ -38,12 +38,8 @@ object SequenceGenerator {
 
 		var removedShort = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7) 
 
+                // sessionID, topicView, topicTitle
 		val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full")).map(m => (m(0), m(3), m(6)))
-
-		// sessionID, topicView, topicTitle
-		// val actionNodes = noHeaderFile.map(line => line.split("\t")).ma
-		//val actionNodes = removedShort.map(m => (m(0), m(3), m(6)))
-		//val actionNodes = removedShort.map(m=
 
 		// filter out nodes that are not "TopicView/full"
 		//val topicFullSessions = actionNodes.filter(n => n._2.contains("TopicView/full")).map(n => n._3)
@@ -53,7 +49,10 @@ object SequenceGenerator {
 		// order results by decreasing count
 		val sortedTitleCounts = titleCounts.sortByKey(false)
 
-		sortedTitleCounts.take(20).foreach(println)
+		//sortedTitleCounts.take(20).foreach(println)
+
+                sortedTitleCounts.saveAsTextFile("results/counts.txt")
+
 
 		// create batches of two sequential elements to calculate time diff
 		// (to do this, lines first have to be collected and then paralleized again)
