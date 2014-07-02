@@ -33,12 +33,23 @@ object SequenceGenerator {
 
 		// read data
 		val file = sc.textFile(input)
-		println(file.count)
 
 		// remove lines that contain the header string (it could be many of them
 		// as different files could be loaded each starting with the header)
 		// (the string starts with 'Session ID')
-		// val noHeaderFile = file.filter(!_.startsWith("Session ID"))
+		val noHeaderFile = file.filter(!_.startsWith("Session ID"))
+
+		// sessionID, topicView, topicTitle
+		val actionNodes = noHeaderFile.map(line => line.split("\t")).map(cols => (cols(0), cols(3), cols(6)))
+
+		val topicFullSessions = actionNodes.filter(cols => cols._2.contains("TopicView/full")).map(cols => cols._3)
+
+		val titleCounts = topicFullSessions.map(n => (n, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
+
+		// order results by decreasing count
+		val sortedTitleCounts = titleCounts.sortByKey(false)
+
+		sortedTitleCounts.take(20).foreach(println)
 
 		// create batches of two sequential elements to calculate time diff
 		// (to do this, lines first have to be collected and then paralleized again)
