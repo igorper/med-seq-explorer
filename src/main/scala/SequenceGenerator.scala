@@ -20,38 +20,63 @@ object SequenceGenerator {
 		val input = conf.getString("input");
 		val sessionThreshold = conf.getInt("sessionThreshold")
 		val clusterUrl = conf.getString("clusterUrl")
+val nPartitions = 10
 
 		val config = new SparkConf()
-             .setMaster("local[8]")
              .setAppName("SequenceGenerator")
-             .set("spark.executor.memory", "8g")
+             .set("spark.executor.memory", "120g")
+	     .set("spark.storage.memoryFraction", "0.1")
+.set("spark.cores.max", "8")
+.set("spark.shuffle.consolidateFiles", "true")
 
 		val sc = new SparkContext(config)
 
-		// read data
-		val file = sc.textFile(input)
+                // read data
+                //val file = sc.textFile("/home/pernek/UpToDate/20110101.txt")
+		val file = sc.textFile("/ncbodata/non-emr/uptodate/rawlogs/*.txt",nPartitions)
 
-		// remove lines that contain the header string (it could be many of them
-		// as different files could be loaded each starting with the header)
-		// (the string starts with 'Session ID')
-		val noHeaderFile = file.filter(!_.startsWith("Session ID"))
+                // remove lines that contain the header string (it could be many of them
+                // as different files could be loaded each starting with the header)
+                // (the string starts with 'Session ID')
+                val noHeaderFile = file.filter(!_.startsWith("Session ID"))
 
-		var removedShort = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7) 
+                // remove lines that do not contain at least 7 columns
+                var removedShort = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7)
 
-                // sessionID, topicView, topicTitle
-		val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full")).map(m => (m(0), m(3), m(6)))
+                // keep only TopicView/ful
+                // store as (sessionID, topicView, topicTitle)
+                val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full")).map(m => (m(0), m(3), m(6)))
+	println(topicFullSessions.first)
 
-		// filter out nodes that are not "TopicView/full"
-		//val topicFullSessions = actionNodes.filter(n => n._2.contains("TopicView/full")).map(n => n._3)
+                // count occurences for single topics
+                //val titleCounts = topicFullSessions.map(n => (n._3, 1)).reduceByKey(_+_, nPartitions)
+//	println(titleCounts.first)
 
-		val titleCounts = topicFullSessions.map(n => (n._3, 1)).reduceByKey(_+_).map {case (title, count) => (count, title) }
+                // order results by decreasing count
+               //val sortedTitleCounts = titleCounts.map { case (title, count) => (count, title) }.sortByKey(false,nPartitions)
 
-		// order results by decreasing count
-		val sortedTitleCounts = titleCounts.sortByKey(false)
+//		sortedTitleCounts.take(10).foreach(println)
 
-		//sortedTitleCounts.take(20).foreach(println)
+                // store single counts to files
+                //sortedTitleCounts.saveAsTextFile("results/counts-single.txt")
 
-                sortedTitleCounts.saveAsTextFile("results/counts.txt")
+                // group nodes by sessionID
+                val groupedBySession = topicFullSessions.groupBy(_._1)
+
+                // for each session create a sequence of topic titles
+                val sequences = groupedBySession.map { case (sessionID, nodes) => nodes.map(_._3) }
+
+		// generate all sequence combinations for sessions
+		// (for now we just constrain max sequnce length to 5 due to possible large sessions => ~1k nodes)
+		val sequenceCombinations = sequences.map(sequence => (2 to math.min(sequence.size,5)).map(winSize => sequence.sliding(winSize)).flatMap(seqIter => seqIter)).flatMap(iter => iter)
+
+		val sequenceCombinationsCounts = sequenceCombinations.filter(s => s.size > 1).map(s => (s, 1)).reduceByKey(_+_, nPartitions)
+
+		val sortedSequenceCombinationsCounts = sequenceCombinationsCounts.map{ case (comb, count) => (count, comb) }.sortByKey(false, nPartitions)
+
+		sortedSequenceCombinationsCounts.saveAsTextFile("results/comb_counts.txt")
+
+
 
 
 		// create batches of two sequential elements to calculate time diff
