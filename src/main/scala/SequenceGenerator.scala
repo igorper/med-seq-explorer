@@ -20,7 +20,6 @@ object SequenceGenerator {
 				val input = conf.getString("input");
 			val sessionThreshold = conf.getInt("sessionThreshold")
 				val clusterUrl = conf.getString("clusterUrl")
-				val nPartitions = 10
 
 				val config = new SparkConf()
 				.setAppName("SequenceGenerator")
@@ -33,7 +32,7 @@ object SequenceGenerator {
 
 				// read data
 				//val file = sc.textFile("/home/pernek/UpToDate/20110101.txt")
-				val file = sc.textFile("/ncbodata/non-emr/uptodate/rawlogs/201101*.txt",nPartitions)
+				val file = sc.textFile("/ncbodata/non-emr/uptodate/rawlogs/201101*.txt")
 
 				// remove lines that contain the header string (it could be many of them
 				// as different files could be loaded each starting with the header)
@@ -70,9 +69,9 @@ object SequenceGenerator {
 			// (for now we just constrain max sequnce length to 5 due to possible large sessions => ~1k nodes)
 			val sequenceCombinations = sequences.map(sequence => (2 to math.min(sequence.size,5)).map(winSize => sequence.sliding(winSize)).flatMap(seqIter => seqIter)).flatMap(iter => iter)
 
-				val sequenceCombinationsCounts = sequenceCombinations.filter(s => s.size > 1).map(s => (s, 1)).reduceByKey(_+_, nPartitions)
+				val sequenceCombinationsCounts = sequenceCombinations.filter(s => s.size > 1).map(s => (s, 1)).reduceByKey(_+_)
 
-				val sortedSequenceCombinationsCounts = sequenceCombinationsCounts.map{ case (comb, count) => (count, comb) }.sortByKey(false, nPartitions)
+				val sortedSequenceCombinationsCounts = sequenceCombinationsCounts.map{ case (comb, count) => (count, comb) }.sortByKey(false)
 
 				sortedSequenceCombinationsCounts.saveAsTextFile("results/comb_counts.txt")
 
