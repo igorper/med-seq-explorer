@@ -69,7 +69,7 @@ object SequenceGenerator {
 				val reversedSequenceCombinationsCounts = sequenceCombinationsFiltered.map{ case (comb, count) => count + "\t" + comb.mkString("\t") }
 
 				// save the combinations to a single file 
-				reversedSequenceCombinationsCounts.coallesce(1)saveAsTextFile("outputFolder" + "monthly/" + month)
+				reversedSequenceCombinationsCounts.coalesce(1)saveAsTextFile(output + "monthly/" + month)
 				}
 
 			// read data
@@ -172,12 +172,12 @@ object SequenceGenerator {
 
 				// store the results to a file
 				// sortedTitleCounts.saveAsTextFile("results/counts.txt")
-				*/
+				
 				// stop timing execution
 				val t1 = System.nanoTime()
 
 				println("##########")
-				printf("Processed '%s' with threshold: %d in %d seconds.\n", input, sessionThreshold, (t1 - t0)/1000000000)
+				printf("Processed '%s' in %d seconds.\n", input, (t1 - t0)/1000000000)
 				println("##########")
 			}
 		}
