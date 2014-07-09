@@ -19,6 +19,8 @@ object SequenceGenerator {
 			val conf = ConfigFactory.load
 			val input = conf.getString("input");
 			val output = conf.getString("outputFolder")
+			val minSeq = conf.getInt("minSequence")
+			val maxSeq = conf.getInt("maxSequence")
 
 			val config = new SparkConf()
 			.setAppName("SequenceGenerator")
@@ -56,11 +58,11 @@ object SequenceGenerator {
 				val sequences = groupedBySession.map { case (sessionID, nodes) => nodes.map(_._3) }
 
 				// generate all sequence combinations for sessions
-				// (for now we just constrain max sequnce length to 5 due to possible large sessions => ~1k nodes)
-				val sequenceCombinations = sequences.map(sequence => (2 to math.min(sequence.size,5)).map(winSize => sequence.sliding(winSize)).flatMap(seqIter => seqIter)).flatMap(iter => iter)
+				// (for now we just constrain max sequnce length to maxSize due to possible large sessions => ~1k nodes)
+				val sequenceCombinations = sequences.map(sequence => (minSeq to math.min(sequence.size, maxSeq)).map(winSize => sequence.sliding(winSize)).flatMap(seqIter => seqIter)).flatMap(iter => iter)
 
 				// TODO: can we do this in the previous command (3 to math...)
-				val sequenceCombinationsCounts = sequenceCombinations.filter(s => s.size > 2).map(s => (s, 1)).reduceByKey(_+_)
+				val sequenceCombinationsCounts = sequenceCombinations.map(s => (s, 1)).reduceByKey(_+_)
 
 				// filter out combination that occur only once in the file
 				val sequenceCombinationsFiltered = sequenceCombinationsCounts.filter{ case (key, count) => count > 1}
