@@ -1,5 +1,4 @@
 {
-	"input" : "/",
-	"sessionThreshold" : 0,
-	"clusterUrl" : "local[4]"
+	"input" : "/media/lin-data/Code/med-seq-explorer/data/",
+	"outputFolder": "/media/lin-data/Code/med-seq-explorer/results/"
 }

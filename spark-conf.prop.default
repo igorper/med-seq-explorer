@@ -1,2 +1,8 @@
-#spark.executor.memory=1G
-#spark.local.dir=/home/igor/scratch
+spark.executor.memory=1G
+spark.local.dir=/home/igor/scratch
+spark.storage.memoryFraction=0.1
+spark.cores.max=2
+spark.shuffle.consolidateFiles=true
+spark.serializer=org.apache.spark.serializer.KryoSerializer
+spark.shuffle.memoryFraction=0.7
+spark.shuffle.spill=false
