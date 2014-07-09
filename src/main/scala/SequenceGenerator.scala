@@ -11,82 +11,87 @@ object SequenceGenerator {
 
 	val dateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
 
-		def main(args: Array[String]) {
+	def main(args: Array[String]) {
 			// start timing execution
 			val t0 = System.nanoTime()
 
 
-				val conf = ConfigFactory.load
-				val input = conf.getString("input");
+			val conf = ConfigFactory.load
+			val input = conf.getString("input");
 			val sessionThreshold = conf.getInt("sessionThreshold")
-				val clusterUrl = conf.getString("clusterUrl")
+			val clusterUrl = conf.getString("clusterUrl")
 
-				val config = new SparkConf()
-				.setAppName("SequenceGenerator")
-				.set("spark.executor.memory", "120g")
-				.set("spark.storage.memoryFraction", "0.1")
-				.set("spark.cores.max", "8")
-				.set("spark.shuffle.consolidateFiles", "true")
-				.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-				.set("spark.shuffle.memoryFraction", "0.7")
-				.set("spark.shuffle.spill", "false")
-				.set("spark.local.dir", "/scratch/users/pernek")
-				val sc = new SparkContext(config)
+			println("This is input " + input)
 
-				val allMonths = new java.io.File("/ncbodata/non-emr/uptodate/rawlogs/").listFiles.filter(_.getName.endsWith(".txt")).map(_.getName.slice(0,6)).distinct
-//val allMonths = Vector("201206*.txt")
-				var month = null
-				for(month <- allMonths){
-					val loadPath = "/ncbodata/non-emr/uptodate/rawlogs/" + month + "*.txt"
-						println(loadPath)
+			val config = new SparkConf()
+			.setAppName("SequenceGenerator")
+			// .set("spark.executor.memory", "120g")
+			// .set("spark.executor.memory", "1g")
+			.set("spark.storage.memoryFraction", "0.1")
+			// .set("spark.cores.max", "8")
+			.set("spark.shuffle.consolidateFiles", "true")
+			.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+			.set("spark.shuffle.memoryFraction", "0.7")
+			.set("spark.shuffle.spill", "false")
+			// .set("spark.local.dir", "/scratch/users/pernek")
+			val sc = new SparkContext(config)
+			val file = sc.textFile("/media/lin-data/Code/med-seq-explorer/data/short.txt")
+			println(file.count)
 
-						// read data
-						//val file = sc.textFile("/home/pernek/UpToDate/20110101.txt")
-						val file = sc.textFile("/ncbodata/non-emr/uptodate/rawlogs/201101*.txt")
+			/*val allMonths = new java.io.File("/ncbodata/non-emr/uptodate/rawlogs/").listFiles.filter(_.getName.endsWith(".txt")).map(_.getName.slice(0,6)).distinct
+			//val allMonths = Vector("201206*.txt")
+			var month = null
+			for(month <- allMonths){
+				val loadPath = "/ncbodata/non-emr/uptodate/rawlogs/" + month + "*.txt"
+				println(loadPath)
 
-						// remove lines that contain the header string (it could be many of them
-						// as different files could be loaded each starting with the header)
-						// (the string starts with 'Session ID')
-						val noHeaderFile = file.filter(!_.startsWith("Session ID"))
+				// read data
+				//val file = sc.textFile("/home/pernek/UpToDate/20110101.txt")
+				val file = sc.textFile("/ncbodata/non-emr/uptodate/rawlogs/201101*.txt")
 
-						// remove lines that do not contain at least 7 columns
-						var removedShort = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7)
+				// remove lines that contain the header string (it could be many of them
+				// as different files could be loaded each starting with the header)
+				// (the string starts with 'Session ID')
+				val noHeaderFile = file.filter(!_.startsWith("Session ID"))
 
-						// keep only TopicView/ful
-						// store as (sessionID, topicView, topicTitle)
-						val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full")).map(m => (m(0), m(3), m(6)))
+				// remove lines that do not contain at least 7 columns
+				var removedShort = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7)
 
-						// count occurences for single topics
-						//val titleCounts = topicFullSessions.map(n => (n._3, 1)).reduceByKey(_+_, nPartitions)
-						//      println(titleCounts.first)
+				// keep only TopicView/ful
+				// store as (sessionID, topicView, topicTitle)
+				val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full")).map(m => (m(0), m(3), m(6)))
 
-						// order results by decreasing count
-						//val sortedTitleCounts = titleCounts.map { case (title, count) => (count, title) }.sortByKey(false,nPartitions)
+				// count occurences for single topics
+				//val titleCounts = topicFullSessions.map(n => (n._3, 1)).reduceByKey(_+_, nPartitions)
+				//      println(titleCounts.first)
 
-						//              sortedTitleCounts.take(10).foreach(println)
+				// order results by decreasing count
+				//val sortedTitleCounts = titleCounts.map { case (title, count) => (count, title) }.sortByKey(false,nPartitions)
 
-						// store single counts to files
-						//sortedTitleCounts.saveAsTextFile("results/counts-single.txt")
+				//              sortedTitleCounts.take(10).foreach(println)
 
-						// group nodes by sessionID
-						val groupedBySession = topicFullSessions.groupBy(_._1)
+				// store single counts to files
+				//sortedTitleCounts.saveAsTextFile("results/counts-single.txt")
 
-						// for each session create a sequence of topic titles
-						val sequences = groupedBySession.map { case (sessionID, nodes) => nodes.map(_._3) }
+				// group nodes by sessionID
+				val groupedBySession = topicFullSessions.groupBy(_._1)
 
-					// generate all sequence combinations for sessions
-					// (for now we just constrain max sequnce length to 5 due to possible large sessions => ~1k nodes)
-					val sequenceCombinations = sequences.map(sequence => (2 to math.min(sequence.size,5)).map(winSize => sequence.sliding(winSize)).flatMap(seqIter => seqIter)).flatMap(iter => iter)
+				// for each session create a sequence of topic titles
+				val sequences = groupedBySession.map { case (sessionID, nodes) => nodes.map(_._3) }
 
-						val sequenceCombinationsCounts = sequenceCombinations.filter(s => s.size > 2).map(s => (s, 1)).reduceByKey(_+_)
+				// generate all sequence combinations for sessions
+				// (for now we just constrain max sequnce length to 5 due to possible large sessions => ~1k nodes)
+				val sequenceCombinations = sequences.map(sequence => (2 to math.min(sequence.size,5)).map(winSize => sequence.sliding(winSize)).flatMap(seqIter => seqIter)).flatMap(iter => iter)
 
-val sequenceCombinationsFiltered = sequenceCombinationsCounts.filter{ case (key, count) => count > 1}
+				val sequenceCombinationsCounts = sequenceCombinations.filter(s => s.size > 2).map(s => (s, 1)).reduceByKey(_+_)
 
-//val filteredSequenceCombinations = sequenceCombinationsCounts.filter((key, count) => count > )
+				val sequenceCombinationsFiltered = sequenceCombinationsCounts.filter{ case (key, count) => count > 1}
 
-					val reversedSequenceCombinationsCounts = sequenceCombinationsFiltered.map{ case (comb, count) => count + "\t" + comb.mkString("\t") }
+				//val filteredSequenceCombinations = sequenceCombinationsCounts.filter((key, count) => count > )
 
-                                reversedSequenceCombinationsCounts.saveAsTextFile("/scratch/users/pernek/results/comb_counts_txt1_" + month)
+				val reversedSequenceCombinationsCounts = sequenceCombinationsFiltered.map{ case (comb, count) => count + "\t" + comb.mkString("\t") }
+
+				reversedSequenceCombinationsCounts.coallesce(1)saveAsTextFile("/scratch/users/pernek/results/comb_counts_txt1_" + month)
 
 
 					//	val sortedSequenceCombinationsCounts = sequenceCombinationsCounts.map{ case (comb, count) => (count, comb) }.sortByKey(false)
@@ -192,12 +197,12 @@ val sequenceCombinationsFiltered = sequenceCombinationsCounts.filter{ case (key,
 
 				// store the results to a file
 				// sortedTitleCounts.saveAsTextFile("results/counts.txt")
-
+*/
 				// stop timing execution
 				val t1 = System.nanoTime()
 
 				println("##########")
 				printf("Processed '%s' with threshold: %d in %d seconds.\n", input, sessionThreshold, (t1 - t0)/1000000000)
 				println("##########")
+			}
 		}
-}

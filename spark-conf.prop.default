@@ -1,0 +1,2 @@
+#spark.executor.memory=1G
+#spark.local.dir=/home/igor/scratch
