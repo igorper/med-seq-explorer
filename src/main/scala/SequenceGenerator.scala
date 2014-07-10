@@ -71,7 +71,7 @@ object SequenceGenerator {
 				val reversedSequenceCombinationsCounts = sequenceCombinationsFiltered.map{ case (comb, count) => count + "\t" + comb.mkString("\t") }
 
 				// save the combinations to a single file 
-				reversedSequenceCombinationsCounts.coalesce(1)saveAsTextFile(output + "monthly/" + month)
+				reversedSequenceCombinationsCounts.coalesce(1)saveAsTextFile(output + month)
 				}
 
 			// read data

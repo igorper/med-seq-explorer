@@ -1,6 +1,6 @@
 {
 	"input" : "/media/lin-data/Code/med-seq-explorer/data/",
-	"outputFolder": "/media/lin-data/Code/med-seq-explorer/results/",
+	"outputFolder": "/media/lin-data/Code/med-seq-explorer/results/monthly/",
 	"minSequence": 2,
 	"maxSequence": 5
 }
