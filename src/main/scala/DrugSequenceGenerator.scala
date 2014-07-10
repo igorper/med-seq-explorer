@@ -13,14 +13,14 @@ import com.typesafe.config.ConfigFactory
 object DrugSequenceGenerator {
 
 	def main(args: Array[String]) {
-			// start timing execution
-			val t0 = System.nanoTime()
-				
-				// stop timing execution
-				val t1 = System.nanoTime()
+		// start timing execution
+		val t0 = System.nanoTime()		
 
-				println("##########")
-				printf("Processed '%s' in %d seconds.\n", "input", (t1 - t0)/1000000000)
-				println("##########")
-			}
-		}
+		// stop timing execution
+		val t1 = System.nanoTime()
+
+		println("##########")
+		printf("Processed '%s' in %d seconds.\n", "input", (t1 - t0)/1000000000)
+		println("##########")
+	}
+}

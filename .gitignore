@@ -22,3 +22,4 @@ data/
 application.json
 results/
 spark-conf.prop
+submit-app.sh
