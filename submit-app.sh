@@ -4,7 +4,7 @@
 MASTER_URL="spark://linthinka:7077"
 
 # set default action if no -a is provided
-action="DrugSequenceGenerator"
+action="SequenceGenerator"
 
 while getopts ":a:" opt; do
   case $opt in
@@ -22,7 +22,7 @@ while getopts ":a:" opt; do
   esac
 done
 
-echo "Submitting action: $action" >&1
+echo "Submitting action: $action to $MASTER_URL" >&1
 
 sbt assembly
 spark-submit --properties-file spark-conf.prop --master $MASTER_URL --class $action target/scala-2.10/SequenceExplorer-assembly-1.0.jar
