@@ -46,9 +46,9 @@ object SequenceGenerator {
 				// remove lines that do not contain at least 7 columns
 				var removedShort = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7)
 
-				// keep only TopicView/full
+				// keep only TopicView/full ans Search/Lucene
 				// store as (sessionID, topicView, topicTitle)
-				val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full")).map(m => (m(0), m(3), m(6)))
+				val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full") || n(3).contains("Search/Lucene")).map(m => (m(0), m(3), m(6)))
 
 				// group nodes by sessionID
 				val groupedBySession = topicFullSessions.groupBy(_._1)
