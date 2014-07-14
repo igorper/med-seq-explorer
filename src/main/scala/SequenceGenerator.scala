@@ -15,7 +15,6 @@ object SequenceGenerator {
 			// start timing execution
 			val t0 = System.nanoTime()
 
-
 			val conf = ConfigFactory.load
 			val input = conf.getString("input");
 			val output = conf.getString("outputFolder")

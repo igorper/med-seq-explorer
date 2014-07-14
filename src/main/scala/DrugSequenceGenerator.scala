@@ -14,7 +14,11 @@ object DrugSequenceGenerator {
 
 	def main(args: Array[String]) {
 		// start timing execution
-		val t0 = System.nanoTime()		
+		val t0 = System.nanoTime()
+
+		val conf = ConfigFactory.load		
+		// TODO: rename this config element to smth. like 'preprocessed_folder'
+		val prepFolder = conf.getString("outputFolder")
 
 		// stop timing execution
 		val t1 = System.nanoTime()
