@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./submit-app.sh -a SequenceGenerator
+./submit-app.sh -a net.pernek.medexplorer.SequenceGenerator

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./submit-app.sh -a DrugSequenceGenerator
+./submit-app.sh -a net.pernek.medexplorer.DrugSequenceGenerator
