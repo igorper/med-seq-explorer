@@ -1,24 +1,11 @@
 package net.pernek.medexplorer
 
-import com.esotericsoftware.kryo.Kryo
-import org.apache.spark.serializer.KryoRegistrator
-
 import org.apache.spark._
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 
 import com.typesafe.config.ConfigFactory
 import java.util.Date
-
-import org.apache.commons.lang3.time.FastDateFormat
-
-class MyRegistrator extends KryoRegistrator {
-	override def registerClasses(kryo: Kryo) {
-		kryo.register(classOf[EventNode])
-	}
-}
-
-case class EventNode(sessionID: String, eventtype: String, text: String)
 
 object SequenceGenerator {
 
@@ -59,13 +46,13 @@ object SequenceGenerator {
 
 			// keep only TopicView/full ans Search/Lucene
 			// store as (sessionID, topicView, topicTitle)
-			val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full") || n(3).contains("Search/Lucene")).map(m => new EventNode(m(0), m(3), if(m(3) == "Search/Lucene") m(5) else m(6)))
+			val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full") || n(3).contains("Search/Lucene")).map(m => (m(0), m(3), if(m(3) == "Search/Lucene") "S_"+ m(5) else "T_" + m(6)))
 
 			// group nodes by sessionID
-			val groupedBySession = topicFullSessions.groupBy(_.sessionID)
+			val groupedBySession = topicFullSessions.groupBy(_._1)
 
-			// for each session create a sequence of EventNodes (ditching sessionID)
-			val sequences = groupedBySession.values//.map { case (sessionID, nodes) => nodes.map(_._3) }
+			// for each session create a sequence of text with encoded event type (ditching sessionID)
+			val sequences = groupedBySession.map { case (sessionID, nodes) => nodes.map(_._3) }
 
 			// generate all sequence combinations for sessions
 			// (for now we just constrain max sequnce length to maxSize due to possible large sessions => ~1k nodes)
