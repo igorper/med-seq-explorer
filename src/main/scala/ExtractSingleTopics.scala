@@ -6,6 +6,9 @@ import org.apache.spark.SparkConf
 
 import com.typesafe.config.ConfigFactory
 
+/*
+Extracts single TopicView/full items and saves them to an output file.
+*/
 object ExtractSingleTopics {
 
 	def main(args: Array[String]) {
