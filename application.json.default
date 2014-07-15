@@ -5,5 +5,6 @@
 	"maxSequence": 5,
 	"size3DrugFolder": "/media/lin-data/Code/med-seq-explorer/results/size3drug/",
   "nonFilteredFolder": "/media/lin-data/Code/med-seq-explorer/results/nonFiltered",
-  "maxNonFilteredResults" : 500
+  "maxNonFilteredResults" : 500,
+  "search_tseq_nint_" :""
 }
