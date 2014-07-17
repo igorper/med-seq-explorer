@@ -14,6 +14,8 @@ Prints sorted occurences of sequences in the form of
 object SearchTopicSequenceGenerator {
 
 	def main(args: Array[String]) {
+		val PrintFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "{" + m._2._2.mkString(", ") + "}:" + m._2._1.mkString(" --> ") + " [" + m._1 + "]"
+
 		// start timing execution
 		val t0 = System.nanoTime()
 
@@ -34,22 +36,20 @@ object SearchTopicSequenceGenerator {
 		// read data
 		val file = sc.textFile(prepFolder + "*")
 
-		val countSeperate = file.map(m => m.split("\t")).map(m => (m.slice(1, m.size), m(0).toInt))
-
-		// select only those starting with S_ (which is the only S_) of length 3 or more
-	 	val startWithSearch = countSeperate.filter(x => x._1(0).startsWith("S_") && x._1.count(y=>y.startsWith("S_")) == 1 && x._1.size > 2)
-
-	 	val toReduce = startWithSearch.map(x=> (x._1.mkString("\t"), x._2)).reduceByKey(_+_).map(x => (x._2, x._1))
-
-	 	val ordered = toReduce.sortByKey(false)
-
-	 	val withoutPref = ordered.map(m =>(m._1, m._2.split("\t").map(i=>i.substring(2,i.size)))).map(m => (m._1, m._2(0), m._2.slice(1, m._2.size))).cache
-
+		val countSeparate = file.map(m => m.split("\t")).map(m => (m.slice(2, m.size), m(1), m(0).toInt))
 
 	 	for(l <- minSeq to (maxSeq - 1)) {
-	 		// store only those that occure more than once
-	 		val toSave = withoutPref.filter(f => f._1 > 1 && f._3.size == l).map(x => x._1 + ", (" + x._2 + "): " + x._3.mkString(" --> "))
-	 		sc.makeRDD(toSave.take(maxResults)).coalesce(1).saveAsTextFile(output + l)
+
+			val combineCountList = countSeparate.filter(f => f._1.size == l).map(i=> (i._1.toList, (i._2, i._3)))
+
+			val orderedList = combineCountList.combineByKey((v) => (List(),0),(a: (List[(String,Int)],Int), v) => (List((v._1,v._2)), v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => (b._1 ++ c._1,b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
+
+			val combineCountSet = countSeparate.filter(f => f._1.size == l).map(i=> (i._1.toSet, (i._2, i._3)))
+
+			val orderedSet = combineCountSet.combineByKey((v) => (List(),0),(a: (List[(String,Int)],Int), v) => (List((v._1,v._2)), v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => (b._1 ++ c._1,b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
+
+	 		sc.makeRDD(orderedSet.map(PrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(output + "set_" + l )
+	 		sc.makeRDD(orderedList.map(PrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(output + "list_" + l)
 	 	}
 
 		// stop timing execution
