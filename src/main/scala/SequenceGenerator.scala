@@ -10,6 +10,9 @@ import java.util.Date
 object SequenceGenerator {
 
 	def main(args: Array[String]) {
+		val SearchPrefix = "S_"
+		val TopicPrefix = "T_"
+
 		// start timing execution
 		val t0 = System.nanoTime()
 
@@ -46,7 +49,7 @@ object SequenceGenerator {
 
 			// keep only TopicView/full ans Search/Lucene
 			// store as (sessionID, topicView, topicTitle)
-			val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full") || n(3).contains("Search/Lucene")).map(m => (m(0), m(3), if(m(3) == "Search/Lucene") "S_"+ m(5) else "T_" + m(6)))
+			val topicFullSessions = removedShort.filter(n => n(3).contains("TopicView/full") || n(3).contains("Search/Lucene")).map(m => (m(0), m(3), if(m(3) == "Search/Lucene") SearchPrefix + m(5) else TopicPrefix + m(6)))
 
 			// group nodes by sessionID
 			val groupedBySession = topicFullSessions.groupBy(_._1)
@@ -58,9 +61,17 @@ object SequenceGenerator {
 			// (for now we just constrain max sequnce length to maxSize due to possible large sessions => ~1k nodes)
 			val sequenceCombinations = sequences.map(sequence => (minSeq to math.min(sequence.size, maxSeq)).map(winSize => sequence.sliding(winSize)).flatMap(seqIter => seqIter)).flatMap(iter => iter)
 
+			// keep only sequences that start with a search query, which is the only search query in the sequence
+			var filteredSequences = sequenceCombinations.filter(f => f(0).startsWith(SearchPrefix) && f.count(i => i.startsWith(SearchPrefix)) == 1)
+
+			// count combinations
 			val sequenceCombinationsCounts = sequenceCombinations.map(s => (s, 1)).reduceByKey(_+_)
 
 			// filter out combination that occur only once in the file
+			// TODO: this is metodologically somehow vague (we remove subsequences that appear only once in the file,
+			// although if the subsequence appears more than once in another file it will be present in the results -
+			// but the number will be off). We introduced this as we were able to significantly shrink the size of the results
+			// and made the processing more stable.
 			val sequenceCombinationsFiltered = sequenceCombinationsCounts.filter{ case (key, count) => count > 1}
 
 			// prepare combination to be saved to a TSV file (count should be first, the combination should follow)
