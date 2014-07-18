@@ -20,7 +20,7 @@ project/plugins/project/
 ### Project specific files and folders
 data/
 application.json
-results/
+results.zip
 spark-conf.prop
 submit-app.sh
 spark-tunnel.sh

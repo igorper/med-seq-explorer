@@ -39,7 +39,9 @@ object SearchTopicSequenceGenerator {
 		// read data
 		val file = sc.textFile(prepFolder + "*")
 
-		val countSeparate = file.map(m => m.split("\t")).map(m => (m.slice(2, m.size), m(1), m(0).toInt))
+		val reducedSequences = file.map(m=>m.split("\t")).map(m=>(m.slice(1,m.size).map(i=>i.toLowerCase).toList, m(0).toInt)).reduceByKey(_+_)
+
+		val countSeparate = reducedSequences.map(m=>(m._1.slice(1,m._1.size), m._1(0), m._2)).cache
 
 	 	for(l <- minSeq to (maxSeq - 1)) {
 
