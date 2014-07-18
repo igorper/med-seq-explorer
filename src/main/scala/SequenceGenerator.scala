@@ -62,10 +62,10 @@ object SequenceGenerator {
 			val sequenceCombinations = sequences.map(sequence => (minSeq to math.min(sequence.size, maxSeq)).map(winSize => sequence.sliding(winSize)).flatMap(seqIter => seqIter)).flatMap(iter => iter)
 
 			// keep only sequences that start with a search query, which is the only search query in the sequence
-			var filteredSequences = sequenceCombinations.filter(f => f(0).startsWith(SearchPrefix) && f.count(i => i.startsWith(SearchPrefix)) == 1)
+			var filteredSequences = sequenceCombinations.map(m => m.toList).filter(f => f(0).startsWith(SearchPrefix) && f.count(i => i.startsWith(SearchPrefix)) == 1)
 
 			// count combinations
-			val sequenceCombinationsCounts = sequenceCombinations.map(s => (s, 1)).reduceByKey(_+_)
+			val sequenceCombinationsCounts =filteredSequences.map(s => (s, 1)).reduceByKey(_+_)
 
 			// filter out combination that occur only once in the file
 			// TODO: this is metodologically somehow vague (we remove subsequences that appear only once in the file,
