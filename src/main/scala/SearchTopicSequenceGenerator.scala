@@ -14,7 +14,8 @@ Prints sorted occurences of sequences in the form of
 object SearchTopicSequenceGenerator {
 
 	def main(args: Array[String]) {
-		val PrintFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "{" + m._2._2.mkString(", ") + "}:" + m._2._1.mkString(" --> ") + " [" + m._1 + "]"
+		val ListPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "{" + m._2._2.mkString(", ") + "}: " + m._2._1.mkString(" --> ") + " [" + m._1 + "]"
+		val SetPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "{" + m._2._2.mkString(", ") + "}: " + m._2._1.mkString(" && ") + " [" + m._1 + "]"
 
 		val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))
 
@@ -52,8 +53,8 @@ object SearchTopicSequenceGenerator {
 
 			val orderedSet = combineCountSet.combineByKey((v) => (List(),0),(a: (List[(String,Int)],Int), v) => (List((v._1,v._2)), v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => ((b._1 ++ c._1).sortWith((x,y)=> x._2 > y._2),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
 
-	 		sc.makeRDD(orderedSet.map(RemovePrefix).map(PrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(output + "set_" + l )
-	 		sc.makeRDD(orderedList.map(RemovePrefix).map(PrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(output + "list_" + l)
+	 		sc.makeRDD(orderedSet.map(RemovePrefix).map(SetPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(output + "set_" + l )
+	 		sc.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(output + "list_" + l)
 	 	}
 
 		// stop timing execution
