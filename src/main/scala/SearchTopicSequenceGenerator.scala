@@ -43,7 +43,7 @@ object SearchTopicSequenceGenerator {
 
 		// read data
 		val file = sc.textFile(prepFolder + "*")
-
+//		val file =sc.textFile("/scratch/users/pernek/results/preproc_search/2_to_10monthly201101/*")
 		val reducedSequences = file.map(m=>m.split("\t")).map(m=>(m.slice(1,m.size).map(i=>i.toLowerCase), m(0).toInt))//.filter(m=>m._1.count(x => x == m._1(1)) != m._1.size - 1)
 		val reducedSequencesList = reducedSequences.map(m=>(m._1.toList, m._2)).reduceByKey(_+_)
 		val reducedSequencesSet = reducedSequences.map(m=>(m._1.toSet, m._2)).reduceByKey(_+_)
@@ -55,17 +55,19 @@ object SearchTopicSequenceGenerator {
 
 			val combineCountList = countSeparateList.filter(f => f._1.size == l).map(i=> (i._1.toList, (i._2, i._3)))
 
-			val orderedList = combineCountList.combineByKey((v) => (List(),0),(a: (List[(String,Int)],Int), v) => (List((v._1,v._2)), v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => ((b._1 ++ c._1).sortWith((x,y)=> x._2 > y._2),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
+			val orderedList = combineCountList.combineByKey((v) => (List((v._1, v._2)),v._2),(a: (List[(String,Int)],Int), v) => (List((v._1,v._2)), v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => ((b._1 ++ c._1).sortWith((x,y)=> x._2 > y._2),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
 
 			orderedList.map(x=>(x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))).first
 
 			val combineCountSet = countSeparateSet.filter(f => f._1.size == l).map(i=> (i._1.toSet, (i._2, i._3)))
 
-			val orderedSet = combineCountSet.combineByKey((v) => (List(),0),(a: (List[(String,Int)],Int), v) => (List((v._1,v._2)), v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => ((b._1 ++ c._1).sortWith((x,y)=> x._2 > y._2),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
+			val orderedSet = combineCountSet.combineByKey((v) => (List((v._1, v._2)),v._2),(a: (List[(String,Int)],Int), v) => (List((v._1,v._2)), v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => ((b._1 ++ c._1).sortWith((x,y)=> x._2 > y._2),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
 
 	 		sc.makeRDD(orderedSet.map(RemovePrefix).map(SetPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(output + "set_" + l )
 	 		sc.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(output + "list_" + l)
 	 	}
+
+		// TODO: do a control check (e.g. calculate the total of ordedred and set occurences with and withouth search query)
 
 		// stop timing execution
 		val t1 = System.nanoTime()
