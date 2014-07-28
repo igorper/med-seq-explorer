@@ -11,8 +11,8 @@ import org.apache.commons.lang3.time.FastDateFormat
 
 object SequenceGenerator {
 
-	val SearchPrefix = "S_"
-	val TopicPrefix = "T_"
+	val SearchPrefix = "s_"
+	val TopicPrefix = "t_"
 	val HourPrefix = "h_"
 
 	val dateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
