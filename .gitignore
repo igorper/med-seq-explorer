@@ -24,3 +24,4 @@ results.zip
 spark-conf.prop
 submit-app.sh
 spark-tunnel.sh
+results/
