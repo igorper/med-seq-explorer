@@ -13,9 +13,14 @@ object SequenceGenerator {
 
 	val SearchPrefix = "S_"
 	val TopicPrefix = "T_"
+	val HourPrefix = "h_"
 
 	val dateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
 
+/* TODO
+* - generate standalone classes with two functions (process and preprocess)
+* - each class should be for a specific task (e.g. SearchTopicCount or SearchTopicCountByHour)
+*/
 	def getSequenceCombinations(removedShort : org.apache.spark.rdd.RDD[Array[String]], action : String, minSeq : Int, maxSeq: Int) : org.apache.spark.rdd.RDD[String] = {
 			// refactor to enum or at least a list of strings
 			if(action == "SearchTopicsCount"){
@@ -55,7 +60,7 @@ object SequenceGenerator {
 				// TODO: split variables have to be preprocessed here already (IPs have to be transformed, dates have to be transformed, etc.)
 
 				// keep only (user, ip address, timestamp, session sequence)
-				val sequences = groupedBySession.map(m=> ( dateFormat.parse(m._2.toList(0)._2).getHours(), m._2.map(x => x._4)))
+				val sequences = groupedBySession.map(m=> ( HourPrefix + dateFormat.parse(m._2.toList(0)._2).getHours().toString, m._2.map(x => x._4)))
 
 				// generate all sequence combinations for sessions
 				// (for now we just constrain max sequnce length to maxSize due to possible large sessions => ~1k nodes)

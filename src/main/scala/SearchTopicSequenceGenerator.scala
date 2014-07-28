@@ -17,6 +17,7 @@ object SearchTopicSequenceGenerator {
 		// prefixes
 		val SearchPrefix = "s_"
 		val TopicPrefix = "t_"
+		val HourPrefix = "h_"
 
 		// formatter for printing results
 		val ListPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "*** ["+ m._1 +"]\n" + m._2._1.mkString(" --> ") + ":\n" + m._2._2.mkString("\n") + "\n"
