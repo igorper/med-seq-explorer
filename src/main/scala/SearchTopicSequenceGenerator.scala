@@ -22,12 +22,13 @@ object SearchTopicSequenceGenerator {
 		// formatter for printing results
 		val ListPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "*** ["+ m._1 +"]\n" + m._2._1.mkString(" --> ") + ":\n" + m._2._2.mkString("\n") + "\n"
 		val ListPrintFormatter1 = (m:(Int, (Iterable[String], List[(String, Int, Int)]))) => { 
-			"1*** ["+ m._1 +"]\n" + 
+			"*** ["+ m._1 +"]\n" + 
 			m._2._1.mkString(" --> ") + ":\n" + m._2._2.map(x=> "- " + x._1 + ", " + x._3 + ", " + x._2 ).mkString("\n") + "\n"
 		}
 		
 		// removes the prefix from each item
-		val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))
+		val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))
+		val RemovePrefix1 = (x:(Int, (Iterable[String], List[(String, Int, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))
 
 		// Splits the sequence into two parts, one containg these search query, the other containg the topics sequence.
 		// A prefix of each item is used for disambiguation.
