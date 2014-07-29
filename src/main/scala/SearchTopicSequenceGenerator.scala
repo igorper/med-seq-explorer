@@ -11,7 +11,7 @@ Prints sorted occurences of sequences in the form of
 - (search query): Topics sequence
 - where Topics sequence is not interupted by a new search query
 */
-object SearchTopicSequenceGenerator {
+class SearchTopicSequenceGenerator {
 
 	def main(args: Array[String]) {
 		// prefixes
