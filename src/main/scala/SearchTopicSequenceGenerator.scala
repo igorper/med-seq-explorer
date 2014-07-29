@@ -21,10 +21,13 @@ object SearchTopicSequenceGenerator {
 
 		// formatter for printing results
 		val ListPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "*** ["+ m._1 +"]\n" + m._2._1.mkString(" --> ") + ":\n" + m._2._2.mkString("\n") + "\n"
-		val ListPrintFormatter1 = (m:(Int, (Iterable[String], List[(String, Int, String)]))) => "*** ["+ m._1 +"]\n" + m._2._1.mkString(" --> ") + ":\n" + m._2._2.mkString("\n") + "\n"
+		val ListPrintFormatter1 = (m:(Int, (Iterable[String], List[(String, Int, Int)]))) => { 
+			"1*** ["+ m._1 +"]\n" + 
+			m._2._1.mkString(" --> ") + ":\n" + m._2._2.map(x=> "- " + x._1 + ", " + x._3 + ", " + x._2 ).mkString("\n") + "\n"
+		}
 		
 		// removes the prefix from each item
-		val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))
+		val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))
 
 		// Splits the sequence into two parts, one containg these search query, the other containg the topics sequence.
 		// A prefix of each item is used for disambiguation.
@@ -75,10 +78,10 @@ object SearchTopicSequenceGenerator {
 				// save to one file
 				sc.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(output + action + l)
 			} else if (action == "SearchTopicsCountByHour"){
-				val combineCountList = countSeparateList.filter(f => f._1.size == l).map(i=> (i._1.toList, (i._2, i._3, i._4)))
+				val combineCountList = countSeparateList.filter(f => f._1.size == l).map(i=> (i._1.toList, (i._2, i._3.slice(2,i._3.size).toInt, i._4)))
 
 				// the main part of the logic. count search occurences for each topic sequence.
-				val orderedList = combineCountList.combineByKey( (v) => (List((v._1, v._3, v._2)),v._3),  (a: (List[(String,Int, String)],Int), v) => (a._1 ++ List((v._1,v._3, v._2)), a._2 + v._3), (b: (List[(String,Int,String)],Int), c: (List[(String,Int,String)], Int)) => ((b._1 ++ c._1).sortWith((x,y)=> x._2 > y._2),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
+				val orderedList = combineCountList.combineByKey( (v) => (List((v._1, v._3, v._2)),v._3),  (a: (List[(String,Int, Int)],Int), v) => (a._1 ++ List((v._1,v._3, v._2)), a._2 + v._3), (b: (List[(String,Int,Int)],Int), c: (List[(String,Int,Int)], Int)) => ((b._1 ++ c._1).sortBy(x=> (x._1, x._3)),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
 
 				// save to one file
 				println("Saving " + output + action + l)
