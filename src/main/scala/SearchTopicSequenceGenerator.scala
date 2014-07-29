@@ -46,7 +46,9 @@ object SearchTopicSequenceGenerator {
 		val sc = new SparkContext(config)
 
 		// read data
-		val file = sc.textFile(prepFolder + "*")
+		val path = prepFolder + action + "/*"	
+		println(path)
+		val file = sc.textFile(path)
 		//	val file =sc.textFile("/scratch/users/pernek/results/preproc_search/2_to_10monthly201101/*")
 
 		// Split count and sequence (at this point still search + topics). Also lowercase the sequence.
