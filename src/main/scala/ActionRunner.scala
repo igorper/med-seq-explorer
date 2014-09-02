@@ -38,7 +38,7 @@ trait ActionRunner {
 			for(month <- allMonths){
 
 				val loadPath = input + month + "*.txt"
-				val outputPath = output + action + "/" + month
+				val outputPath = output + "/" action + "/" + month
 				println("Processing action '" + action + "' for: " + loadPath)
 
 				doPreprocessing(loadPath, outputPath)
@@ -47,7 +47,8 @@ trait ActionRunner {
 
 		def process()
 
-	  // this one should perform any preprocessing transformations
-	  // it would make sense to override this one
+	  // This method performs all the preprocessing and should be overriden by each individual task,
+	  // as each task usually preprocesses files in it's own manner. Preprocessing is currently needed
+	  // to load all individual data files and extract only sequences relevant to our analysis.
 	  def doPreprocessing(inputPath: String, outputPath: String)
 	}

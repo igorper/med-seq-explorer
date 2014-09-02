@@ -6,6 +6,10 @@ import org.apache.spark.SparkConf
 
 import com.typesafe.config.ConfigFactory
 
+/*
+This is the main file that submitted to the spark cluster. It loads the configuration and
+runs the appropriate action (task).
+*/
 object Processor {
 
 	def registerProcessors() : Map[String, ActionRunner] = {
@@ -20,7 +24,7 @@ object Processor {
 
 		val conf = ConfigFactory.load
 		val rawFolder = conf.getString("rawFolder")
-		val prepSequencesFolder = conf.getString("prepSequencesFolder")
+		val prepSequencesFolder = conf.getString("preprocessedSequencesFolder")
 		val minSeq = conf.getInt("minSequence")
 		val maxSeq = conf.getInt("maxSequence")
 		val maxResults = conf.getInt("resultsLimit")
