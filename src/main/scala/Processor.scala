@@ -15,7 +15,7 @@ object Processor {
 	def main(args: Array[String]) {
 		val registeredProcessors = registerProcessors()
 
-		val config = new SparkConf().setAppName("Processor")		
+		val config = new SparkConf().setAppName("Processor")
 		val sc = new SparkContext(config)
 
 		val conf = ConfigFactory.load

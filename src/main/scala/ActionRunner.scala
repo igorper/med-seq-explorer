@@ -2,19 +2,22 @@ package net.pernek.medexplorer
 
 import org.apache.spark._
 import org.apache.spark.SparkContext._
-import org.apache.spark.SparkConf
 
+/*
+* A base class defining the structure for each Task.
+*/
 trait ActionRunner {
 
 		// prefixes
 		protected val SearchPrefix = "s_"
 		protected val TopicPrefix = "t_"
-		protected val HourPrefix = "h_"
 
 		protected var sparkContext : SparkContext = null
 		protected var action : String = null
 		protected var minSeq : Int = 0
 		protected var maxSeq : Int = 0
+		// protected val minSeq = 2
+		// protected val maxSeq = 5
 
 		// used to pass SparkContext and other configuration objects/properties
 		def initialize(sc: SparkContext, action: String, minSeq: Int, maxSeq: Int) = {
