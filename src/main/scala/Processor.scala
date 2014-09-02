@@ -40,9 +40,9 @@ object Processor {
 		}
 
 		
-		actionRunner.initialize(sc, action, minSeq, maxSeq)
+		actionRunner.initialize(sc, action, minSeq, maxSeq, rawFolder, prepSequencesFolder)
 
-		actionRunner.preprocessToSearchSequences(rawFolder, prepSequencesFolder)
+		actionRunner.preprocessToSearchSequences()
 		actionRunner.process()
 		// println(actionRunner.SearchPrefix)
 

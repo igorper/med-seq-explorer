@@ -57,6 +57,8 @@ object SearchTopics extends ActionRunner {
 	}
 
 	def process() = {
-		println("SearchTopics processor")	
+		val file = sparkContext.textFile(this.preprocessingFolder)
+
+		println(file.count)
 	}
 }
