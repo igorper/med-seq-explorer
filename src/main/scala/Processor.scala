@@ -24,7 +24,7 @@ object Processor {
 
 		val conf = ConfigFactory.load
 		val rawFolder = conf.getString("rawFolder")
-		val prepSequencesFolder = conf.getString("preprocessedSequencesFolder")
+		val resultsFolder = conf.getString("resultsFolder")
 		val minSeq = conf.getInt("minSequence")
 		val maxSeq = conf.getInt("maxSequence")
 		val maxResults = conf.getInt("resultsLimit")
@@ -38,9 +38,8 @@ object Processor {
 		  	return
 		  }
 		}
-
 		
-		actionRunner.initialize(sc, action, minSeq, maxSeq, rawFolder, prepSequencesFolder)
+		actionRunner.initialize(sc, action, minSeq, maxSeq, rawFolder, resultsFolder, maxResults)
 
 		actionRunner.preprocessToSearchSequences()
 		actionRunner.process()

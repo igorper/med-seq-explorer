@@ -10,7 +10,7 @@ object SearchTopicsByHour extends ActionRunner {
 
 	val dateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
 
-	def process() = {
+	override def doProcessing() = {
 		println("SearchTopicsByHour processor")	
 	}
 

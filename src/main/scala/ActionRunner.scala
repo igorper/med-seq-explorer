@@ -18,17 +18,31 @@ trait ActionRunner {
 		protected var action : String = null
 		protected var minSeq : Int = 0
 		protected var maxSeq : Int = 0
+		protected var resultsFolder : String = null
 		protected var preprocessingFolder : String = null
+		protected var processingFolder : String = null
 		protected var input : String = null
+		protected var maxResults : Int = 0
 
+		// TODO: For now, all possible configuration is passed to init. This is solution is not the best, as not all
+		// tasks will need all the configuration. A better solution would be to have a base class that should have
+		// the initialize method that should accept a base ConfigOptions object. The
+		// object should contain only general stuff, such as sparkContext, input, output. All the other options should
+		// go in classes extending ConfigOptions. Childs from ActionRunner should override the initialize method with
+		// childs from ConfigOptions.
 		// used to pass SparkContext and other configuration objects/properties
-		def initialize(sc: SparkContext, action: String, minSeq: Int, maxSeq: Int, input: String, output: String) = {
+		def initialize(sc: SparkContext, action: String, minSeq: Int, maxSeq: Int, input: String, resultsFolder: String, maxResults : Int) = {
 			sparkContext = sc
 			this.action = action
 			this.minSeq = minSeq
 			this.maxSeq = maxSeq
-			this.preprocessingFolder = output + "/" + action
 			this.input = input
+			this.maxResults = maxResults
+
+			// store folders
+			this.resultsFolder = resultsFolder + action + "/"
+			this.preprocessingFolder = resultsFolder + "preprocrocessed/"
+			this.processingFolder = resultsFolder + "processed/"
 		}
 
 		// this one should only loop the raw files
@@ -47,7 +61,7 @@ trait ActionRunner {
 					// TODO: Do preprocessing only if output folder does not exist yet (to do preprocessing again the output folder should
 					// removed or a force flag should be set)
 					val loadPath = this.input + month + "*.txt"
-					val outputPath = this.preprocessingFolder + "/" + month
+					val outputPath = this.preprocessingFolder + month
 					println("Processing action '" + action + "' for: " + loadPath)
 
 					doPreprocessing(loadPath, outputPath)
@@ -55,10 +69,20 @@ trait ActionRunner {
 			}
 		}
 
-		def process()
+		def process() = {
+			if(Files.exists(Paths.get(processingFolder))){
+				println("Processed resultes folder already esists. Skipping processing.")
+
+			} else {
+				// TODO: add input and output path here (same as in preprocessing)
+				doProcessing()
+			}
+		}
 
 	  // This method performs all the preprocessing and should be overriden by each individual task,
 	  // as each task usually preprocesses files in it's own manner. Preprocessing is currently needed
 	  // to load all individual data files and extract only sequences relevant to our analysis.
 	  def doPreprocessing(inputPath: String, outputPath: String)
+
+	  def doProcessing()
 	}
