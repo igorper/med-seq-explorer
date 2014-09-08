@@ -7,6 +7,7 @@ object SearchTopics extends ActionRunner {
 
 	val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))
 	val ListPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "*** ["+ m._1 +"]\n" + m._2._1.mkString(" --> ") + ":\n" + m._2._2.mkString("\n") + "\n"
+	val JSONFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "{sequenceCount: "+ m._1 +", sequence: '" + m._2._1.mkString(", ") + "', searchQueries: [" + m._2._2.map(o => "{query: '" + o._1 + "', count: " + o._2 + "}").mkString("\n") + "]}"
 	val SplitToTopicAndSearch = (m:(Iterable[String], Int)) => (m._1.filter(f=>f.startsWith(TopicPrefix)), m._1.filter(f=>f.startsWith(SearchPrefix)).head, m._2)
 
 
@@ -67,7 +68,7 @@ object SearchTopics extends ActionRunner {
 		// Split count and sequence (at this point still search + topics). Also lowercase the sequence.
 		val reducedSequences = file.map(m => m.split("\t")).map(m => (m.slice(1,m.size).map(i=>i.toLowerCase), m(0).toInt))
 
-		// Reduce the sequences (this will take care of joining same sequences from different files).
+		// Reduce the sequences (this will join equal sequences from different files).
 		val reducedSequencesList = reducedSequences.map(m => (m._1.toList, m._2)).reduceByKey(_+_)
 
 		// split search and topic sequence and cache the results
@@ -84,7 +85,11 @@ object SearchTopics extends ActionRunner {
 			val orderedList = combineCountList.combineByKey((v) => (List((v._1, v._2)),v._2), (a: (List[(String,Int)],Int), v) => (a._1 ++ List((v._1,v._2)), a._2 + v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => ((b._1 ++ c._1).sortWith((x,y)=> x._2 > y._2),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
 
 			// save to one file
-			sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+			if(proccessingOutputType == "TEXT") {
+				sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+			} else if(proccessingOutputType == "JSON") {
+				sparkContext.makeRDD(orderedList.map(RemovePrefix).map(JSONFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+			}
 		}
 	}
 }

@@ -10,8 +10,41 @@ object SearchTopicsByHour extends ActionRunner {
 
 	val dateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
 
+	val ListPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int, Int)]))) => { 
+		"*** ["+ m._1 +"]\n" + 
+		m._2._1.mkString(" --> ") + ":\n" + m._2._2.map(x=> "- " + x._1 + ", " + x._3 + ", " + x._2 ).mkString("\n") + "\n"
+	}
+	val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))
+	val SplitToTopicAndSearch = (m:(Iterable[String], Int)) => (m._1.filter(f=>f.startsWith(TopicPrefix)), m._1.filter(f=>f.startsWith(SearchPrefix)).head, m._1.filter(f=>f.startsWith(HourPrefix)).head, m._2)
+
 	override def doProcessing() = {
-		println("SearchTopicsByHour processor")	
+		val file = sparkContext.textFile(this.preprocessingFolder + "*")
+
+		// Split count and sequence (at this point still search + topics). Also lowercase the sequence.
+		val reducedSequences = file.map(m => m.split("\t")).map(m => (m.slice(1,m.size).map(i=>i.toLowerCase), m(0).toInt))
+
+		// Reduce the sequences (this will take care of joining same sequences from different files).
+		val reducedSequencesList = reducedSequences.map(m => (m._1.toList, m._2)).reduceByKey(_+_)
+
+		// split search and topic sequence and cache the results
+		val countSeparateList = reducedSequencesList.map(SplitToTopicAndSearch).cache
+		//println(countSeparateList.first)
+		
+
+		// loop different sequence lengths
+		for(l <- minSeq to (maxSeq - 1)) {
+			// pick only sequences of the particular length
+			println(l)
+ 			val combineCountList = countSeparateList.filter(f => f._1.size == l).map(i=> (i._1.toList, (i._2, i._3.slice(2,i._3.size).toInt, i._4)))
+ 			println(combineCountList.first)
+
+			// the main part of the logic. count search occurences for each topic sequence.
+			//val orderedList = combineCountList.combineByKey( (v) => (List((v._1, v._3, v._2)),v._3),  (a: (List[(String,Int, Int)],Int), v) => (a._1 ++ List((v._1,v._3, v._2)), a._2 + v._3), (b: (List[(String,Int,Int)],Int), c: (List[(String,Int,Int)], Int)) => ((b._1 ++ c._1).sortBy(x=> (x._1, x._3)),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
+			//println(orderedList.first)
+
+			// save to one file
+			//sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+		}	
 	}
 
 	override def doPreprocessing(loadPath: String, outputPath: String) = {
@@ -39,7 +72,7 @@ object SearchTopicsByHour extends ActionRunner {
 		// this is a string thing that has to be done for min and max sequence values to be used correctly in RDD
 		// (otherwise, if used as var, they are set to 0 - probably init value)
 		val minSeqVal = this.minSeq
-		val maxSeqVal = this.maxSeq
+		val maxSeqVal = this.maxSeq + 1
 
 		// slide a window to get combinations of sequences (between min and max sequence size)
 		val sequenceCombinations = sequences.map(m => (minSeqVal to math.min(m._2.size, maxSeqVal)).map(winSize =>  m._2.sliding(winSize)).flatMap(seqIter => seqIter.map(x=>(m._1, x)))).flatMap(y=>y)

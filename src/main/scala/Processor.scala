@@ -7,6 +7,11 @@ import org.apache.spark.SparkConf
 import com.typesafe.config.ConfigFactory
 
 /*
+ TODO: 
+	- create test to make sure preprocessing works OK (start with SearchTopics), carry on for the others
+*/
+
+/*
 This is the main file that submitted to the spark cluster. It loads the configuration and
 runs the appropriate action (task).
 */
@@ -29,6 +34,7 @@ object Processor {
 		val maxSeq = conf.getInt("maxSequence")
 		val maxResults = conf.getInt("resultsLimit")
 		val action = conf.getString("action")
+		val processingOutputType = conf.getString("processingOutputType")
 
 		val actionRunner = try { 
 		  registeredProcessors(action)
@@ -39,7 +45,7 @@ object Processor {
 		  }
 		}
 		
-		actionRunner.initialize(sc, action, minSeq, maxSeq, rawFolder, resultsFolder, maxResults)
+		actionRunner.initialize(sc, action, minSeq, maxSeq, rawFolder, resultsFolder, maxResults, processingOutputType)
 
 		actionRunner.preprocessToSearchSequences()
 		actionRunner.process()

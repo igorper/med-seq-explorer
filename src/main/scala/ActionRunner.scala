@@ -23,6 +23,7 @@ trait ActionRunner {
 		protected var processingFolder : String = null
 		protected var input : String = null
 		protected var maxResults : Int = 0
+		protected var proccessingOutputType : String = null
 
 		// TODO: For now, all possible configuration is passed to init. This is solution is not the best, as not all
 		// tasks will need all the configuration. A better solution would be to have a base class that should have
@@ -31,18 +32,19 @@ trait ActionRunner {
 		// go in classes extending ConfigOptions. Childs from ActionRunner should override the initialize method with
 		// childs from ConfigOptions.
 		// used to pass SparkContext and other configuration objects/properties
-		def initialize(sc: SparkContext, action: String, minSeq: Int, maxSeq: Int, input: String, resultsFolder: String, maxResults : Int) = {
+		def initialize(sc: SparkContext, action: String, minSeq: Int, maxSeq: Int, input: String, resultsFolder: String, maxResults : Int, proccessingOutputType: String) = {
 			sparkContext = sc
 			this.action = action
 			this.minSeq = minSeq
 			this.maxSeq = maxSeq
 			this.input = input
 			this.maxResults = maxResults
+			this.proccessingOutputType = proccessingOutputType
 
 			// store folders
 			this.resultsFolder = resultsFolder + action + "/"
-			this.preprocessingFolder = resultsFolder + "preprocrocessed/"
-			this.processingFolder = resultsFolder + "processed/"
+			this.preprocessingFolder = this.resultsFolder + "preprocrocessed/"
+			this.processingFolder = this.resultsFolder + "processed/"
 		}
 
 		// this one should only loop the raw files
@@ -62,7 +64,7 @@ trait ActionRunner {
 					// removed or a force flag should be set)
 					val loadPath = this.input + month + "*.txt"
 					val outputPath = this.preprocessingFolder + month
-					println("Processing action '" + action + "' for: " + loadPath)
+					println("Preprocessing action '" + action + "' for: " + loadPath)
 
 					doPreprocessing(loadPath, outputPath)
 				}
