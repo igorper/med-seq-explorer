@@ -12,27 +12,43 @@ import org.scalatest.BeforeAndAfter
 
 import org.apache.commons.io.FileUtils;
 import java.io.File
+import scala.io.Source
+
+import com.typesafe.config.ConfigFactory
 
 class SearchTopicsSuite extends FunSuite with BeforeAndAfter {
 
-	val rawFolder = "/home/igor/test/test/"
-	val resultsFolder = "/home/igor/test/unit/"
+	/*
+		Test configuration. Currently, this is defined on the class level
+		as we are running only one test. If multiple tests will be added,
+		configuration can be moved to each individual test.
+	*/
 	val minSeq = 2
 	val maxSeq = 5
 	val maxResults = 500
 	val action = "SearchTopics"
 	val processingOutputType = "JSON"
 
+	var rawFolder: String = null
+	var resultsFolder: String = null
 	var actionRunner: ActionRunner = null
 	var sc: SparkContext = null
 
 	before {
+		// read configuration
+		val conf = ConfigFactory.load("test-settings")
+		val testTempFolder = conf.getString("testTempFolder")
+		rawFolder = testTempFolder + "test/"
+		resultsFolder = testTempFolder + "unit/"
 
+		// remove any previous results
 		FileUtils.deleteDirectory(new File(resultsFolder))
 
+		// create a local spark context
 		val config = new SparkConf().setMaster("local").setAppName("Processor")
 		sc = new SparkContext(config)
 
+		// initialize SearchTopics action
 		actionRunner = SearchTopics
 		actionRunner.initialize(sc, action, minSeq, maxSeq, rawFolder, resultsFolder, maxResults, processingOutputType)
 	}
@@ -43,14 +59,16 @@ class SearchTopicsSuite extends FunSuite with BeforeAndAfter {
 
   test("SearchTopics preprocessing and processing should return correct results.") {
 
+  	// check preprocessing
 		actionRunner.preprocessToSearchSequences()
 
 		// preprocessing files should have correct results
-		val actual = scala.io.Source.fromFile("/home/igor/test/unit/SearchTopics/preprocrocessed/201101/part-00000").getLines().toList.map(_.split("\t").toList).toList
+		val actual = Source.fromFile(resultsFolder + "SearchTopics/preprocrocessed/201101/part-00000").getLines().toList.map(_.split("\t").toList).toList
 		val expected = List(List("2", "s_pulmonary hypertension", "t_Oph", "t_Oph1", "t_Oph2"), List("2", "s_pulmonary hypertension", "t_Oph", "t_Oph1"), List("2", "s_pulmonary hypertension", "t_Oph"))
 
 		assert(expected == actual)
 
+		// check processing
 		actionRunner.process()
 
 		// processing files should have correct results

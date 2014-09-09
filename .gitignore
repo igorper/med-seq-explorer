@@ -25,3 +25,4 @@ spark-conf.prop
 submit-app.sh
 spark-tunnel.sh
 results/
+src/test/resources/test-settings.json
