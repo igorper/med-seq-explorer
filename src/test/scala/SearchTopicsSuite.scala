@@ -68,9 +68,23 @@ class SearchTopicsSuite extends FunSuite with BeforeAndAfter {
 
 		assert(expected == actual)
 
-		// check processing
+		// check processing (assert sequences of different lengths)
 		actionRunner.process()
 
 		// processing files should have correct results
+		// length 2
+		val actualProcessed2 = Source.fromFile(resultsFolder + "SearchTopics/processed/2/part-00000").getLines().toList
+		val expectedProcessed2 = List("{sequenceCount: 2, sequence: 'oph, oph1', searchQueries: [{query: 'pulmonary hypertension', count: 2}]}")
+		assert(expectedProcessed2 == actualProcessed2)
+
+		// length 3
+		val actualProcessed3 = Source.fromFile(resultsFolder + "SearchTopics/processed/3/part-00000").getLines().toList
+		val expectedProcessed3 = List("{sequenceCount: 2, sequence: 'oph, oph1, oph2', searchQueries: [{query: 'pulmonary hypertension', count: 2}]}")
+		assert(expectedProcessed3 == actualProcessed3)
+		
+		// length 4
+		val actualProcessed4 = Source.fromFile(resultsFolder + "SearchTopics/processed/4/part-00000").getLines().toList
+		val expectedProcessed4 = List()
+		assert(expectedProcessed4 == actualProcessed4)
   }
 }
