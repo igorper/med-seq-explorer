@@ -56,7 +56,7 @@ class SearchTopicsSuite extends FunSuite with BeforeAndAfter {
 	after {
 		sc.stop()
 	}
-
+/*
   test("SearchTopics preprocessing and processing should return correct results.") {
 
   	// check preprocessing
@@ -86,5 +86,5 @@ class SearchTopicsSuite extends FunSuite with BeforeAndAfter {
 		val actualProcessed4 = Source.fromFile(resultsFolder + "SearchTopics/processed/4/part-00000").getLines().toList
 		val expectedProcessed4 = List()
 		assert(expectedProcessed4 == actualProcessed4)
-  }
+  }*/
 }

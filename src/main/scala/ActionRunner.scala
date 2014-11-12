@@ -51,6 +51,7 @@ trait ActionRunner {
 		// this one should only be overriden if you want to somehow change the logic of getting
 		// documents to process
 		def preprocessToSearchSequences() = {				
+			println("Using preprocessing folder: " + this.preprocessingFolder)
 			if(Files.exists(Paths.get(this.preprocessingFolder))){
 				println("Preprocessing folder already esists. Skipping preprocessing.")
 

@@ -29,21 +29,26 @@ object SearchTopicsByHour extends ActionRunner {
 		// split search and topic sequence and cache the results
 		val countSeparateList = reducedSequencesList.map(SplitToTopicAndSearch).cache
 		//println(countSeparateList.first)
-		
 
-		// loop different sequence lengths
-		for(l <- minSeq to (maxSeq - 1)) {
-			// pick only sequences of the particular length
-			println(l)
- 			val combineCountList = countSeparateList.filter(f => f._1.size == l).map(i=> (i._1.toList, (i._2, i._3.slice(2,i._3.size).toInt, i._4)))
- 			println(combineCountList.first)
+		val numberOfPreprocLines = file.count
+		println("Started processing. There are " + numberOfPreprocLines + " preprocessed lines to be processed.")
+		if(numberOfPreprocLines == 0) {
+			println("No data to process. Exiting.")
+		} else {
+			// loop different sequence lengths
+			for(l <- minSeq to (maxSeq - 1)) {
+				// pick only sequences of the particular length
+				println(l)
+	 			val combineCountList = countSeparateList.filter(f => f._1.size == l).map(i=> (i._1.toList, (i._2, i._3.slice(2,i._3.size).toInt, i._4)))
+ 				println(combineCountList.first)
+	
+				// the main part of the logic. count search occurences for each topic sequence.
+				//val orderedList = combineCountList.combineByKey( (v) => (List((v._1, v._3, v._2)),v._3),  (a: (List[(String,Int, Int)],Int), v) => (a._1 ++ List((v._1,v._3, v._2)), a._2 + v._3), (b: (List[(String,Int,Int)],Int), c: (List[(String,Int,Int)], Int)) => ((b._1 ++ c._1).sortBy(x=> (x._1, x._3)),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
+				//println(orderedList.first)
 
-			// the main part of the logic. count search occurences for each topic sequence.
-			//val orderedList = combineCountList.combineByKey( (v) => (List((v._1, v._3, v._2)),v._3),  (a: (List[(String,Int, Int)],Int), v) => (a._1 ++ List((v._1,v._3, v._2)), a._2 + v._3), (b: (List[(String,Int,Int)],Int), c: (List[(String,Int,Int)], Int)) => ((b._1 ++ c._1).sortBy(x=> (x._1, x._3)),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
-			//println(orderedList.first)
-
-			// save to one file
-			//sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+				// save to one file
+				//sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+		      	 }
 		}	
 	}
 
