@@ -73,22 +73,27 @@ object SearchTopics extends ActionRunner {
 
 		// split search and topic sequence and cache the results
 		val countSeparateList = reducedSequencesList.map(SplitToTopicAndSearch).cache
-		println(countSeparateList.count)
+		
+		val numberOfPreprocLines = file.count
+		println("Started processing. There are " + numberOfPreprocLines + " preprocessed lines to be processed.")
+		if(numberOfPreprocLines == 0) {
+			println("No data to process. Exiting.")
+		} else {
+			// loop different sequence lengths
+			for(l <- minSeq to (maxSeq - 1)) {
+				// pick only sequences of the particular length
+				// TODO: we have just added hour to the topic sequence, think about how to merge this with old code, and how to group sequences together
+	 			val combineCountList = countSeparateList.filter(f => f._1.size == l).map(i=> (i._1.toList, (i._2, i._3)))
 
-		// loop different sequence lengths
-		for(l <- minSeq to (maxSeq - 1)) {
-			// pick only sequences of the particular length
-			// TODO: we have just added hour to the topic sequence, think about how to merge this with old code, and how to group sequences together
- 			val combineCountList = countSeparateList.filter(f => f._1.size == l).map(i=> (i._1.toList, (i._2, i._3)))
+				// the main part of the logic. count search occurences for each topic sequence.
+				val orderedList = combineCountList.combineByKey((v) => (List((v._1, v._2)),v._2), (a: (List[(String,Int)],Int), v) => (a._1 ++ List((v._1,v._2)), a._2 + v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => ((b._1 ++ c._1).sortWith((x,y)=> x._2 > y._2),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
 
-			// the main part of the logic. count search occurences for each topic sequence.
-			val orderedList = combineCountList.combineByKey((v) => (List((v._1, v._2)),v._2), (a: (List[(String,Int)],Int), v) => (a._1 ++ List((v._1,v._2)), a._2 + v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => ((b._1 ++ c._1).sortWith((x,y)=> x._2 > y._2),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
-
-			// save to one file
-			if(proccessingOutputType == "TEXT") {
-				sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
-			} else if(proccessingOutputType == "JSON") {
-				sparkContext.makeRDD(orderedList.map(RemovePrefix).map(JSONFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+				// save to one file
+				if(proccessingOutputType == "TEXT") {
+					sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+				} else if(proccessingOutputType == "JSON") {
+					sparkContext.makeRDD(orderedList.map(RemovePrefix).map(JSONFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+				}
 			}
 		}
 	}
