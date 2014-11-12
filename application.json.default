@@ -1,11 +1,11 @@
 {
-	"input" : "/media/lin-data/Code/med-seq-explorer/data/",
-	"outputFolder": "/media/lin-data/Code/med-seq-explorer/results/monthly/",
+	# valid options: 'SearchTopics', 'SearchTopicsByHour'
+	"action" : "SearchTopics",
+	"rawFolder" : "/home/igor/test/full/",
+	"resultsFolder" : "/home/igor/test/results/",
 	"minSequence": 2,
 	"maxSequence": 5,
-	"size3DrugFolder": "/media/lin-data/Code/med-seq-explorer/results/size3drug/",
-  "nonFilteredFolder": "/media/lin-data/Code/med-seq-explorer/results/nonFiltered",
-  "maxNonFilteredResults" : 500,
-  "search_tseq_nint" :"",
-  "action" : "SearchTopicsCount"
+	"resultsLimit" : 500,
+	# valid options: 'TEXT', 'JSON'
+	"processingOutputType": "JSON"
 }

@@ -7,7 +7,9 @@ object SearchTopics extends ActionRunner {
 
 	val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))
 	val ListPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "*** ["+ m._1 +"]\n" + m._2._1.mkString(" --> ") + ":\n" + m._2._2.mkString("\n") + "\n"
-	val JSONFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => "{sequenceCount: "+ m._1 +", sequence: '" + m._2._1.mkString(", ") + "', searchQueries: [" + m._2._2.map(o => "{query: '" + o._1 + "', count: " + o._2 + "}").mkString("\n") + "]}"
+	val JSONFormatter = (m:(Int, (Iterable[String], List[(String, Int)]))) => 
+	"{sequenceCount: "+ m._1 +", sequence: \"" + m._2._1.mkString(", ") + 
+	"\", searchQueries: [" + m._2._2.map(o => "{query: \"" + o._1 + "\", count: " + o._2 + "}").mkString(",") + "]},"
 	val SplitToTopicAndSearch = (m:(Iterable[String], Int)) => (m._1.filter(f=>f.startsWith(TopicPrefix)), m._1.filter(f=>f.startsWith(SearchPrefix)).head, m._2)
 
 
@@ -92,6 +94,7 @@ object SearchTopics extends ActionRunner {
 				if(proccessingOutputType == "TEXT") {
 					sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
 				} else if(proccessingOutputType == "JSON") {
+					// TODO: currently, we have to manually append array brackets to output json ([])
 					sparkContext.makeRDD(orderedList.map(RemovePrefix).map(JSONFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
 				}
 			}

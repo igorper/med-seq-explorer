@@ -73,6 +73,7 @@ trait ActionRunner {
 		}
 
 		def process() = {
+			println("Using processing folder: " + processingFolder)
 			if(Files.exists(Paths.get(processingFolder))){
 				println("Processed resultes folder already esists. Skipping processing.")
 

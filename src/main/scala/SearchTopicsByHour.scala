@@ -10,11 +10,12 @@ object SearchTopicsByHour extends ActionRunner {
 
 	val dateFormat = FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss")
 
-	val ListPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int, Int)]))) => { 
-		"*** ["+ m._1 +"]\n" + 
-		m._2._1.mkString(" --> ") + ":\n" + m._2._2.map(x=> "- " + x._1 + ", " + x._3 + ", " + x._2 ).mkString("\n") + "\n"
-	}
-	val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2))))
+	val ListPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int, Int)]))) => "*** [" + m._1 + "]\n" + 
+			m._2._1.mkString(" --> ") + ":\n" + m._2._2.map(x=> "- " + x._1 + ", " + x._3 + ", " + x._2 ).mkString("\n") + "\n"
+	val JSONFormatter = (m:(Int, (Iterable[String], List[(String, Int, Int)]))) => 
+		"{sequenceCount: "+ m._1 +", sequence: \"" + m._2._1.mkString("\\t") + 
+		"\", searchQueries: [" + m._2._2.map(o => "{query: \"" + o._1 + "\", count: " + o._2 + ", hour: "+ o._3 +"}").mkString(",") + "]},"
+	val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2, s._3))))
 	val SplitToTopicAndSearch = (m:(Iterable[String], Int)) => (m._1.filter(f=>f.startsWith(TopicPrefix)), m._1.filter(f=>f.startsWith(SearchPrefix)).head, m._1.filter(f=>f.startsWith(HourPrefix)).head, m._2)
 
 	override def doProcessing() = {
@@ -38,17 +39,22 @@ object SearchTopicsByHour extends ActionRunner {
 			// loop different sequence lengths
 			for(l <- minSeq to (maxSeq - 1)) {
 				// pick only sequences of the particular length
-				println(l)
 	 			val combineCountList = countSeparateList.filter(f => f._1.size == l).map(i=> (i._1.toList, (i._2, i._3.slice(2,i._3.size).toInt, i._4)))
- 				println(combineCountList.first)
+
+				val itemNum = combineCountList.count
+				println("Processing " + itemNum + " counts for sequnece length " + l)
 	
 				// the main part of the logic. count search occurences for each topic sequence.
-				//val orderedList = combineCountList.combineByKey( (v) => (List((v._1, v._3, v._2)),v._3),  (a: (List[(String,Int, Int)],Int), v) => (a._1 ++ List((v._1,v._3, v._2)), a._2 + v._3), (b: (List[(String,Int,Int)],Int), c: (List[(String,Int,Int)], Int)) => ((b._1 ++ c._1).sortBy(x=> (x._1, x._3)),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
-				//println(orderedList.first)
+				val orderedList = combineCountList.combineByKey( (v) => (List((v._1, v._3, v._2)),v._3),  (a: (List[(String,Int, Int)],Int), v) => (a._1 ++ List((v._1,v._3, v._2)), a._2 + v._3), (b: (List[(String,Int,Int)],Int), c: (List[(String,Int,Int)], Int)) => ((b._1 ++ c._1).sortBy(x=> (x._1, x._3)),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
 
 				// save to one file
-				//sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
-		      	 }
+				if(proccessingOutputType == "TEXT") {
+					sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+				} else if(proccessingOutputType == "JSON") {
+					// TODO: currently, we have to manually append array brackets to output json ([])
+					sparkContext.makeRDD(orderedList.map(RemovePrefix).map(JSONFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
+				}
+  	 	}
 		}	
 	}
 
