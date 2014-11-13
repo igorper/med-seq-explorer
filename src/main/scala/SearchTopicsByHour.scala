@@ -13,8 +13,8 @@ object SearchTopicsByHour extends ActionRunner {
 	val ListPrintFormatter = (m:(Int, (Iterable[String], List[(String, Int, Int)]))) => "*** [" + m._1 + "]\n" + 
 			m._2._1.mkString(" --> ") + ":\n" + m._2._2.map(x=> "- " + x._1 + ", " + x._3 + ", " + x._2 ).mkString("\n") + "\n"
 	val JSONFormatter = (m:(Int, (Iterable[String], List[(String, Int, Int)]))) => 
-		"{sequenceCount: "+ m._1 +", sequence: \"" + m._2._1.mkString("\\t") + 
-		"\", searchQueries: [" + m._2._2.map(o => "{query: \"" + o._1 + "\", count: " + o._2 + ", hour: "+ o._3 +"}").mkString(",") + "]},"
+		"{\"sequenceCount\": "+ m._1 +", \"sequence\": \"" + m._2._1.mkString(";") + 
+		"\", \"searchQueries\": [" + m._2._2.map(o => "{\"query\": \"" + o._1 + "\", \"count\": " + o._2 + ", \"hour\": "+ o._3 +"}").mkString(",") + "]},"
 	val RemovePrefix = (x:(Int, (Iterable[String], List[(String, Int, Int)]))) => (x._1,(x._2._1.map(t=>t.slice(2,t.size)), x._2._2.map(s=>(s._1.slice(2,s._1.size),s._2, s._3))))
 	val SplitToTopicAndSearch = (m:(Iterable[String], Int)) => (m._1.filter(f=>f.startsWith(TopicPrefix)), m._1.filter(f=>f.startsWith(SearchPrefix)).head, m._1.filter(f=>f.startsWith(HourPrefix)).head, m._2)
 
