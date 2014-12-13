@@ -24,7 +24,7 @@ object DistinctSession extends ActionRunner {
 	override def doProcessing() = {
 		val file = sparkContext.textFile(this.preprocessingFolder + "*")
 
-		val distinctSessionIds = map(l=>l.split("\t")).map(m=>m(0)).distinct
+		val distinctSessionIds = file.map(l=>l.split("\t")).map(m=>m(0)).distinct
 
 		distinctSessionIds.coalesce(1).saveAsTextFile(this.processingFolder)
 	}
