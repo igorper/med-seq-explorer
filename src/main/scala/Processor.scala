@@ -18,7 +18,11 @@ runs the appropriate action (task).
 object Processor {
 
 	def registerProcessors() : Map[String, ActionRunner] = {
-		Map("SearchTopics" -> SearchTopics, "SearchTopicsByHour" -> SearchTopicsByHour)
+		Map(
+			"SearchTopics" -> SearchTopics, 
+			"SearchTopicsByHour" -> SearchTopicsByHour,
+			"DistinctSession" -> DistinctSession
+			)
 	}
 
 	def main(args: Array[String]) {

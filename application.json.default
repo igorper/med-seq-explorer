@@ -1,5 +1,5 @@
 {
-	# valid options: 'SearchTopics', 'SearchTopicsByHour'
+	# valid options: 'SearchTopics', 'SearchTopicsByHour', 'DistinctSession'
 	"action" : "SearchTopics",
 	"rawFolder" : "/home/igor/test/full/",
 	"resultsFolder" : "/home/igor/test/results/",
