@@ -66,8 +66,6 @@ def main(sessions_list_folder, raw_data_folder, output_data_folder):
           for row in raw_reader:
             if row[0] in lookup:
               filtered_writer.writerow(row)
-            else:
-              print "Skipping " + row[0]
  
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Filter raw data and keep only sessions from the sessions list.')
