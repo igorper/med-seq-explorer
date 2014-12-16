@@ -90,6 +90,10 @@ object SearchTopics extends ActionRunner {
 				// the main part of the logic. count search occurences for each topic sequence.
 				val orderedList = combineCountList.combineByKey((v) => (List((v._1, v._2)),v._2), (a: (List[(String,Int)],Int), v) => (a._1 ++ List((v._1,v._2)), a._2 + v._2), (b: (List[(String,Int)],Int), c: (List[(String,Int)], Int)) => ((b._1 ++ c._1).sortWith((x,y)=> x._2 > y._2),b._2 + c._2)).map(m=>(m._2._2,(m._1,m._2._1))).sortByKey(false)
 
+				println("Number of items of length " + l + ": " + orderedList.count)
+				println("Number of items of length " + l + " with support > 100: " + orderedList.filter(m=> m._1 > 100).count)
+				println("Number of items of length " + l + " with support > 1000: " + orderedList.filter(m=> m._1 > 1000).count)
+
 				// save to one file
 				if(proccessingOutputType == "TEXT") {
 					sparkContext.makeRDD(orderedList.map(RemovePrefix).map(ListPrintFormatter).take(maxResults)).coalesce(1).saveAsTextFile(this.processingFolder + l)
