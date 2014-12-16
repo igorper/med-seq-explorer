@@ -22,6 +22,8 @@ object SearchTopics extends ActionRunner {
 		// (the string starts with 'Session ID')
 		val noHeaderFile = file.filter(!_.startsWith("Session ID"))
 
+		println("Total number of lines before preprocessing: " + noHeaderFile.count)
+
 		// remove lines that do not contain at least 7 columns
 		var removedShort = noHeaderFile.map(line => line.split("\t")).filter(n=>n.length >= 7)
 
